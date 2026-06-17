@@ -68,7 +68,7 @@ docker-compose up
 
 ## Modules built
 
-- [x] Redis: caching, sessions, rate limiting
+- [ ] Redis: caching, sessions, rate limiting
 - [ ] SQS: async trade processing
 - [ ] S3: document storage
 - [ ] Docker: containerization
