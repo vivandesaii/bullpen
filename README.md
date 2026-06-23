@@ -1,4 +1,4 @@
-# WealthLens
+# bullpen
 
 A production-grade portfolio intelligence API built to mirror 
 the infrastructure patterns used in financial applications at scale.
