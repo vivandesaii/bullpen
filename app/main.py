@@ -19,5 +19,5 @@ app.include_router(prices.router, prefix="/prices", tags=["prices"])
 
 @app.get("/")
 async def root():
-    return {"message": "WealthLens Portfolio Intelligence API"}
+    return {"message": "Bullpen Portfolio Intelligence API"}
 

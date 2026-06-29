@@ -9,6 +9,7 @@ class Settings(BaseSettings):
     aws_region: str
     s3_bucket: str
     sqs_queue_name: str
+    sqs_dlq_name: str
     postgres_db: str
     postgres_user: str
     postgres_password: str
