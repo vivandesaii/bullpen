@@ -10,6 +10,8 @@ class Settings(BaseSettings):
     s3_bucket: str
     sqs_queue_name: str
     sqs_dlq_name: str
+    sqs_queue_url: str
+    sqs_dlq_url: str
     postgres_db: str
     postgres_user: str
     postgres_password: str
