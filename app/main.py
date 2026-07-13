@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from app.routes import auth, portfolio, trades, prices
+from app.routes import auth, portfolio, trades, prices, leaderboard
 
 app = FastAPI() # Entry point for the API
 
@@ -10,12 +10,11 @@ app = FastAPI() # Entry point for the API
 # Include the routers for different API endpoints
 # Each router is prefixed with its respective path and tagged for documentation purposes
 # Decoupling the routes into separate modules allows for better organization and maintainability of the codebase
-app.include_router(auth.router, prefix="/auth", tags=["auth"])
-app.include_router(portfolio.router, prefix="/portfolio", tags=["portfolio"])
-app.include_router(trades.router, prefix="/trades", tags=["trades"])
-app.include_router(prices.router, prefix="/prices", tags=["prices"])
-
-
+app.include_router(auth.router)
+app.include_router(portfolio.router)
+app.include_router(trades.router)
+app.include_router(prices.router)
+app.include_router(leaderboard.router)
 
 @app.get("/")
 async def root():

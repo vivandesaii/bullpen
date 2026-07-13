@@ -93,14 +93,13 @@ docker-compose up
 ### Portfolio
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | /portfolio/{user_id} | Holdings, balance, return % |
-| GET | /portfolio/{user_id}/history | Full trade history |
+| GET | /portfolio/me | Holdings, balance, return % |
 
 ### Trades
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | POST | /trades | Submit buy/sell → queued via SQS |
-| GET | /trades/{trade_id} | Check trade status |
+| GET | /trades/{trade_id} | Check trade status (coming soon) |
 
 ### Prices
 | Method | Endpoint | Description |
