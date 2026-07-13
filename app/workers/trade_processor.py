@@ -39,8 +39,10 @@ def process_trade(trade: dict) -> bool:
             logger.error(f"Could not fetch price for {trade['symbol']}")
             return False
 
-        # Check user has sufficient virtual balance
-        # Execute trade — update holdings, deduct balance, write trade record
+
+        #TODO: Implement Business logic for trade execution, including:
+            # Check user has sufficient virtual balance
+            # Execute trade — update holdings, deduct balance, write trade record
 
         # Invalidate Redis cache for this user's portfolio
         # sync function so we use asyncio.run to call the async invalidate_cache function

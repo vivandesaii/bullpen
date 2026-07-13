@@ -122,7 +122,7 @@ docker-compose up
 ## Modules built
 
 - [x] Redis: caching, sessions, rate limiting, leaderboard
-- [ ] SQS: async trade processing
+- [X] SQS: async trade processing
 - [ ] S3: document storage
 - [ ] Docker: containerization
 - [ ] PostgreSQL: schema, transactions, indexes
