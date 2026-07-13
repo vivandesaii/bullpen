@@ -1,6 +1,7 @@
 import json
 from typing import Any, Dict, Optional
 import secrets
+from fastapi import Header, HTTPException
 from app.redis_client import redis_client
 
 SESSION_TTL = 86400 # Session time-to-live in seconds (24 hours)
@@ -11,19 +12,23 @@ async def create_session(user_id: int) -> str:
     session_id = secrets.token_urlsafe(32) # Generate a secure random session token
     key = f"session:{session_id}"
 
-    await redis_client.setex(key, SESSION_TTL, user_id) # Store the session in Redis with an expiration time (TTL)
+    await redis_client.setex(key, SESSION_TTL, str(user_id)) # Store the session in Redis with an expiration time (TTL)
     await redis_client.sadd(f"user_sessions:{user_id}", session_id) # Add the session ID to the set of sessions for the user
 
     return session_id
 
-async def get_session(session_id: str) -> Optional[int]:
-    """Retrieves the user ID associated with the given session token, or None if the session is invalid."""
+async def get_session(session_id: str = Header(alias="X-Session-Id")) -> int:
+    """FastAPI dependency: resolves the X-Session-Id header to a user ID.
+
+    Raises 401 if the header is missing (FastAPI handles that) or the session
+    is expired/invalid, so routes can rely on always getting a valid user ID.
+    """
 
     key = f"session:{session_id}"
     value = await redis_client.get(key)
     if value is None:
-        return None
-    
+        raise HTTPException(status_code=401, detail="Invalid or expired session.")
+
     await redis_client.expire(key, SESSION_TTL) # Refresh the session expiration time on access
     return int(value)
 

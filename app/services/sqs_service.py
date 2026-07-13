@@ -14,8 +14,8 @@ sqs_client = boto3.client(
 
 async def send_trade_message(trade_data: dict, user_id: int) -> dict:
     """Sends a trade message to the SQS queue and returns the response."""
-    
-    message_body = json.dumps(trade_data) # Serealize the trade data to a JSON string for sending to SQS
+
+    message_body = json.dumps(trade_data) # Serialize the trade data to a JSON string for sending to SQS
     dedup_id = str(uuid.uuid4())  # Generate a unique deduplication ID for the message
     
     def _send(): # Define a synchronous function to send the message to SQS
