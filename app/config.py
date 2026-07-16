@@ -9,7 +9,7 @@ class Settings(BaseSettings):
     aws_access_key_id: str
     aws_secret_access_key: str
     aws_region: str
-    s3_documents_bucket: str
+    s3_bucket: str
     s3_presigned_url_expiration: int = 3600  # Default expiration time for presigned URLs in seconds
     sqs_queue_name: str
     sqs_dlq_name: str
