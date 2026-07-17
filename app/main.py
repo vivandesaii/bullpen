@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from app.routes import auth, portfolio, trades, prices, leaderboard
+from app.routes import auth, portfolio, trades, prices, leaderboard, documents
 
 app = FastAPI() # Entry point for the API
 
@@ -15,6 +15,7 @@ app.include_router(portfolio.router)
 app.include_router(trades.router)
 app.include_router(prices.router)
 app.include_router(leaderboard.router)
+app.include_router(documents.router)
 
 @app.get("/")
 async def root():
