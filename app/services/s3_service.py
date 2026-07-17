@@ -113,3 +113,13 @@ async def generate_presigned_upload_url(key: str, expiration: int | None = None)
     logger.info(f"Generated presigned upload URL for key: {key}"
                 f" (expires in {expiration} seconds)")
     return presigned_upload_url
+
+async def delete_file(key: str) -> None:
+    """
+    Deletes a file from S3.
+    """
+    def _delete():
+        s3_client.delete_object(Bucket=settings.s3_bucket, Key=key)
+
+    await asyncio.to_thread(with_retry, _delete, operation_name=f"s3_delete:{key}")
+    logger.info(f"Deleted file from S3 with key: {key}")
