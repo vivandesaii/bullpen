@@ -96,7 +96,7 @@ async def generate_presigned_url(key: str, expiration: int | None = None) -> str
     return presigned_url
 
 
-async def generate_presigned_upload_url(key: str, expiration: int | None = None) -> str:
+async def generate_presigned_upload_url(key: str, expiration: int | None = None, content_type: str) -> str:
     """
     Generates a presigned URL for uploading an S3 object.
     """
@@ -105,7 +105,7 @@ async def generate_presigned_upload_url(key: str, expiration: int | None = None)
     def _generate():
         return s3_client.generate_presigned_url(
             'put_object',
-            Params={'Bucket': settings.s3_bucket, 'Key': key},
+            Params={'Bucket': settings.s3_bucket, 'Key': key, 'ContentType': content_type, 'ServerSideEncryption': 'AES256'},
             ExpiresIn=expiration
         )
 
