@@ -1,12 +1,10 @@
 # Stage 1 — builder
-# Install all dependencies including build tools
 FROM python:3.11-slim AS builder
 WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Stage 2 — runtime
-# Copy only what's needed to run, not the build tools
 FROM python:3.11-slim AS runtime
 
 WORKDIR /app
