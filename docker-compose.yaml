@@ -1,4 +1,5 @@
 # docker-compose.yml for Bullpen — FastAPI, PostgreSQL, Redis, and LocalStack
+# Starts all 4 container at once.
 
 services:
   redis:

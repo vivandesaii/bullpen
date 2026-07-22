@@ -1,3 +1,8 @@
+# Builds the api conainer, using a pre existing image we got from docker hub. 
+# We are using staging building pattern here to ensure the final image is reduced size.
+# This happes because stage 1 we get all the dependencies to do that a lot of usless artifacts are also installed,
+# so we need a stage 2 which is for when the image is actually built we only copy the artifacts needed to run the code.
+
 # Stage 1 — builder
 FROM python:3.11-slim AS builder
 WORKDIR /app
