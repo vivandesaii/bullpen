@@ -5,6 +5,8 @@ LEADERBOARD_KEY = "leaderboard:returns"
 
 async def update_user_return(user_id: int, return_pct: float) -> None:
     """Updates the user's return percentage in the leaderboard."""
+    # TODO: Persist the updated return percentage to PostgreSQL as well as Redis.
+    # TODO: Use a raw-SQL upsert once the DB connection helper exists.
     await redis_client.zadd(LEADERBOARD_KEY, {str(user_id): return_pct}) # Add or update the user's score in the sorted set
 
 async def get_top_n(n: int) -> list[dict]:

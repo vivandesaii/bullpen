@@ -33,6 +33,8 @@ async def submit_trade(trade_request: TradeRequest, user_id: int = Depends(get_s
         "submitted_at_unix": time.time()  # Epoch seconds for the worker's stale-trade check
         }
 
+    # TODO: Persist the trade submission to PostgreSQL before or immediately after enqueueing it.
+    # TODO: Write the raw SQL insert for trade submissions, including status and audit fields.
     await send_trade_message(trade_data, user_id)  # Send the trade message to SQS asynchronously
 
     return {"status": "queued","trade_id": trade_data["trade_id"], "message": "Trade Submitted. Processing Shortly."}  # Return a confirmation response to the client

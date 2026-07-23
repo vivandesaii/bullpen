@@ -17,7 +17,8 @@ async def get_portfolio(user_id: int = Depends(get_session)):
         return {"user_id": user_id, "portfolio": cached_portfolio, "source": "cache"}
     
     # If not cached, fetch from database (simulated here as an empty portfolio)
-    # TODO: fetch from postgres 
+    # TODO: Fetch the user's holdings, cash balance, and return metrics from PostgreSQL using raw SQL.
+    # TODO: Replace the empty portfolio placeholder with the real DB result.
 
     # Cache the portfolio data in Redis with a TTL of 60 seconds
     await set_cache(f"portfolio:{user_id}", {}, ttl=60)

@@ -40,9 +40,11 @@ def process_trade(trade: dict) -> bool:
             return False
 
 
-        #TODO: Implement Business logic for trade execution, including:
-            # Check user has sufficient virtual balance
-            # Execute trade — update holdings, deduct balance, write trade record
+        # TODO: Implement the trade execution path in PostgreSQL:
+        # TODO: Check the user has sufficient virtual balance.
+        # TODO: Update holdings and cash balance with raw SQL.
+        # TODO: Insert a trade record and any portfolio ledger entry.
+        # TODO: Update the leaderboard snapshot after the trade is committed.
 
         # Invalidate Redis cache for this user's portfolio
         # sync function so we use asyncio.run to call the async invalidate_cache function

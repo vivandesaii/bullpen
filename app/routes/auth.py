@@ -23,12 +23,13 @@ async def register_user(register_request: User):
     # Hash the password
     hashed_password = pwd_context.hash(register_request.password)
 
-    #TODO: Store the user in the database (e.g., PostgreSQL) with the hashed password
+    # TODO: Insert the new user into PostgreSQL with the hashed password and return the created user ID.
+    # TODO: Use a raw-SQL insert here once the DB connection helper is in place.
 
     # Create session for the new user
-    session_id = await create_session(user_id=1)  
+    session_id = await create_session(user_id=1)
 
-    #TODO: Replace with actual user ID from the database
+    # TODO: Replace this placeholder user ID with the actual ID returned from the database insert.
 
     return {"status": "success", "session_id": session_id, "message": "User registered successfully."}
 
@@ -41,8 +42,9 @@ async def login_user(login_request: User):
     Validates the request, checks the password, and creates a session.
     """
     
-    # TODO: fetch user from Postgres by email
-    # TODO: raise 401 if user not found
+    # TODO: Fetch the user from PostgreSQL by email using raw SQL.
+    # TODO: Raise 401 if the user is not found.
+    # TODO: Replace the placeholder password hash with the stored hash from the database.
     hashed_password = "$2b$12$placeholder"  # stub until Postgres exists
 
 
@@ -51,7 +53,8 @@ async def login_user(login_request: User):
         raise HTTPException(status_code=401, detail="Invalid email or password.")
     
     # Create session for the user
-    session_id = await create_session(user_id=1)  #TODO: Replace with actual user ID from the database
+    # TODO: Use the real database user ID instead of the placeholder value here.
+    session_id = await create_session(user_id=1)
 
     return {"status": "success", "session_id": session_id, "message": "User logged in successfully."}
 
