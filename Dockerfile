@@ -15,6 +15,11 @@ FROM python:3.11-slim AS runtime
 WORKDIR /app
 COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
 COPY --from=builder /usr/local/bin /usr/local/bin
+
+# Create a non-root user and switch to it for security 
+RUN adduser --disabled-password --no-create-home bullpen
+USER bullpen
+
 COPY . .
 
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
