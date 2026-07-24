@@ -123,5 +123,5 @@ docker-compose up
 - [x] Redis: caching, sessions, rate limiting, leaderboard
 - [X] SQS: async trade processing
 - [X] S3: document storage
-- [ ] Docker: containerization
+- [X] Docker: containerization
 - [ ] PostgreSQL: schema, transactions, indexes

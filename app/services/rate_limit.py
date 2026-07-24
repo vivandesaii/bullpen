@@ -4,7 +4,8 @@ from app.redis_client import redis_client  # Reuse the shared Redis pool (settin
 from app.services.sessions import get_session
 
 async def check_rate_limit(user_id: int = Depends(get_session), limit: int = 100, window: int = 60):
-    """Checks if the client has exceeded the rate limit.
+    """
+    Checks if the client has exceeded the rate limit.
 
     user_id comes from the session dependency (server-side), so clients
     cannot spoof whose rate limit they consume.

@@ -2,6 +2,7 @@ import json
 from typing import Any, Dict, Optional
 from app.redis_client import redis_client
 
+
 async def get_cached(key: str) -> Optional[Dict]:
     """Fetches a value from Redis cache and returns it as a dictionary if it exists."""
 
