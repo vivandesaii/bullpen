@@ -1,44 +1,13 @@
+
 -- Users
 CREATE TABLE IF NOT EXISTS users (
-    id SERIAL PRIMARY KEY,
+    id SERIAL PRIMARY KEY, 
     email TEXT UNIQUE NOT NULL,
     hashed_password TEXT NOT NULL,
-    virtual_balance NUMERIC(12,2) DEFAULT 100000.00,
-    created_at TIMESTAMPTZ DEFAULT NOW()
+    balance NUMERIC(15,2) NOT NULL DEFAULT 100000.00,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- Portfolios
-CREATE TABLE IF NOT EXISTS portfolios (
-    id SERIAL PRIMARY KEY,
-    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
-    created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- Holdings
-CREATE TABLE IF NOT EXISTS holdings (
-    id SERIAL PRIMARY KEY,
-    portfolio_id INTEGER REFERENCES portfolios(id) ON DELETE CASCADE,
-    symbol TEXT NOT NULL,
-    quantity INTEGER NOT NULL DEFAULT 0,
-    avg_price NUMERIC(12,2) NOT NULL DEFAULT 0,
-    updated_at TIMESTAMPTZ DEFAULT NOW(),
-    UNIQUE (portfolio_id, symbol)
-);
-
--- Trades
-CREATE TABLE IF NOT EXISTS trades (
-    id SERIAL PRIMARY KEY,
-    trade_id UUID UNIQUE NOT NULL,
-    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
-    symbol TEXT NOT NULL,
-    quantity INTEGER NOT NULL,
-    direction TEXT NOT NULL CHECK (direction IN ('buy', 'sell')),
-    price NUMERIC(12,2) NOT NULL,
-    status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'executed', 'failed')),
-    submitted_at TIMESTAMPTZ NOT NULL,
-    executed_at TIMESTAMPTZ,
-    created_at TIMESTAMPTZ DEFAULT NOW()
-);
 
 -- Documents
 CREATE TABLE IF NOT EXISTS documents (
@@ -50,9 +19,25 @@ CREATE TABLE IF NOT EXISTS documents (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Indexes
-CREATE INDEX IF NOT EXISTS idx_trades_user_id ON trades(user_id);
-CREATE INDEX IF NOT EXISTS idx_holdings_portfolio_id ON holdings(portfolio_id);
-CREATE INDEX IF NOT EXISTS idx_portfolios_user_id ON portfolios(user_id);
-CREATE INDEX IF NOT EXISTS idx_trades_symbol ON trades(symbol);
+-- Trades
+CREATE TABLE IF NOT EXISTS trades (
+    id SERIAL PRIMARY KEY,
+    trade_id UUID NOT NULL UNIQUE,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    symbol VARCHAR(10) NOT NULL,
+    quantity INTEGER NOT NULL CHECK (quantity > 0),
+    price NUMERIC(15,4) NOT NULL CHECK (price > 0),
+    direction VARCHAR(4) NOT NULL CHECK (direction IN ('buy', 'sell')),
+    status VARCHAR(20) NOT NULL DEFAULT 'completed' CHECK (status IN ('completed', 'failed', 'pending')),
+    submitted_at TIMESTAMPTZ DEFAULT NOW(),
+    executed_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+)
 
+-- Holdings
+CREATE TABLE IF NOT EXISTS holdings (
+    user_id INTEGER NOT NULL REFERENCES users(id),
+    symbol VARCHAR(10) NOT NULL,
+    quantity INTEGER NOT NULL DEFAULT 0 CHECK (quantity >= 0),
+    PRIMARY KEY (user_id, symbol)
+)
