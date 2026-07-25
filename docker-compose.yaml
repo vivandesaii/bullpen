@@ -31,6 +31,7 @@ services:
       retries: 5
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./app/db/migrations/001_create_tables.sql:/docker-entrypoint-initdb.d/001_create_tables.sql
 
       
   localstack:

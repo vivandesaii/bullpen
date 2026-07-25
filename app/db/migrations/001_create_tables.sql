@@ -32,7 +32,7 @@ CREATE TABLE IF NOT EXISTS trades (
     submitted_at TIMESTAMPTZ DEFAULT NOW(),
     executed_at TIMESTAMPTZ,
     created_at TIMESTAMPTZ DEFAULT NOW()
-)
+);
 
 -- Holdings
 CREATE TABLE IF NOT EXISTS holdings (
@@ -40,4 +40,4 @@ CREATE TABLE IF NOT EXISTS holdings (
     symbol VARCHAR(10) NOT NULL,
     quantity INTEGER NOT NULL DEFAULT 0 CHECK (quantity >= 0),
     PRIMARY KEY (user_id, symbol)
-)
+);
