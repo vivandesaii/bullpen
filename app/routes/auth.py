@@ -3,6 +3,7 @@ from app.services.sessions import get_session, create_session, delete_session, d
 from app.services.rate_limit import check_rate_limit
 from pydantic import BaseModel
 from passlib.context import CryptContext
+from app.db.connection import get_connection
 
 pwd_context = CryptContext(schemes=["bcrypt"])
 
@@ -23,16 +24,34 @@ async def register_user(register_request: User):
     # Hash the password
     hashed_password = pwd_context.hash(register_request.password)
 
-    # TODO: Insert the new user into PostgreSQL with the hashed password and return the created user ID.
-    # TODO: Use a raw-SQL insert here once the DB connection helper is in place.
+    conn = get_connection()
+    cursor = conn.cursor()
 
-    # Create session for the new user
-    session_id = await create_session(user_id=1)
+    try:
+        cursor.execute(
+            """
+            INSERT INTO users (email, hashed_password)
+            VALUES (%s, %s)
+            RETURNING id
+            """,
+            (register_request.email, hashed_password)
+        )
 
-    # TODO: Replace this placeholder user ID with the actual ID returned from the database insert.
+        user_id = cursor.fetchone()["id"]
+        conn.commit()
 
-    return {"status": "success", "session_id": session_id, "message": "User registered successfully."}
+        session_id = await create_session(user_id=user_id)
+        
+        return {"status": "success", "session_id": session_id, "message": "User registered successfully."}
+        
 
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=400, detail="Email already registered.")
+
+    finally:
+        cursor.close()
+        conn.close()
 
 
 @router.post("/login", tags=["auth"], dependencies=[Depends(check_rate_limit)])
@@ -41,22 +60,44 @@ async def login_user(login_request: User):
     Endpoint to log in a user.
     Validates the request, checks the password, and creates a session.
     """
+    conn = get_connection()
+    cursor = conn.cursor()
+      
+    try:
+        cursor.execute(
+            """
+            SELECT id, hashed_password FROM users
+            WHERE email = %s
+            """,
+            (login_request.email,)
+        )
+
+        user = cursor.fetchone()
+
+        if user is None:
+            raise HTTPException(status_code=401, detail="User not found.")
+
+        hashed_password = user["hashed_password"]
+
+        # Verify the password
+        if not pwd_context.verify(login_request.password, hashed_password):
+            raise HTTPException(status_code=401, detail="Invalid email or password.")
     
-    # TODO: Fetch the user from PostgreSQL by email using raw SQL.
-    # TODO: Raise 401 if the user is not found.
-    # TODO: Replace the placeholder password hash with the stored hash from the database.
-    hashed_password = "$2b$12$placeholder"  # stub until Postgres exists
+        # Create session for the user
+   
+        user_id = user["id"]
+        session_id = await create_session(user_id=user_id)
+        return {"status": "success", "session_id": session_id, "message": "User logged in successfully."}
+    
+    except HTTPException:
+        raise
 
-
-    # Verify the password
-    if not pwd_context.verify(login_request.password, hashed_password):
+    except Exception as e:
         raise HTTPException(status_code=401, detail="Invalid email or password.")
-    
-    # Create session for the user
-    # TODO: Use the real database user ID instead of the placeholder value here.
-    session_id = await create_session(user_id=1)
 
-    return {"status": "success", "session_id": session_id, "message": "User logged in successfully."}
+    finally:
+        cursor.close()
+        conn.close()
 
 
 
