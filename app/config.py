@@ -15,6 +15,7 @@ class Settings(BaseSettings):
     sqs_dlq_name: str
     sqs_queue_url: str
     sqs_dlq_url: str
+    aws_endpoint_url: str = "http://localstack:4566"
     # PostgreSQL configuration
     postgres_db: str
     postgres_user: str

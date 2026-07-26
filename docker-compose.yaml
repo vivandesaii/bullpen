@@ -35,7 +35,7 @@ services:
 
       
   localstack:
-    image: localstack/localstack
+    image: localstack/localstack:3.0
     ports:
       - "4566:4566"
     environment:
@@ -43,7 +43,8 @@ services:
       DEFAULT_REGION: ca-central-1
       PERSISTENCE: 1
     volumes:
-      - localstack_data:/var/lib/localstack  
+      - localstack_data:/var/lib/localstack
+      - ./infra/localstack-init.sh:/etc/localstack/init/ready.d/init.sh
 
   api:
     build: 
