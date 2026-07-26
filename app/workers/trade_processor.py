@@ -19,6 +19,10 @@ LEADERBOARD_KEY = "leaderboard:returns"
 # "Event loop is closed" crashes, so we keep this worker fully synchronous.
 sync_redis_client = redis.from_url(settings.redis_url, decode_responses=True)
 
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(name)s %(levelname)s %(message)s"
+)
 logger = logging.getLogger("trade_processor")  # Logger so we can see what the worker is doing in the container logs
 
 # Every user starts with this much fake cash. Used to calculate "what % has this
