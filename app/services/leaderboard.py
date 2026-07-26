@@ -1,12 +1,28 @@
 from typing import Optional
 from app.redis_client import redis_client
+from app.db.connection import get_connection
 
 LEADERBOARD_KEY = "leaderboard:returns"
 
 async def update_user_return(user_id: int, return_pct: float) -> None:
     """Updates the user's return percentage in the leaderboard."""
-    # TODO: Persist the updated return percentage to PostgreSQL as well as Redis.
-    # TODO: Use a raw-SQL upsert once the DB connection helper exists.
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            """
+            INSERT INTO leaderboard_snapshots (user_id, return_pct, updated_at)
+            VALUES (%s, %s, NOW())
+            ON CONFLICT (user_id) DO UPDATE
+            SET return_pct = EXCLUDED.return_pct, updated_at = NOW()
+            """,
+            (user_id, return_pct)
+        )
+        conn.commit()
+    finally:
+        cursor.close()
+        conn.close()
+
     await redis_client.zadd(LEADERBOARD_KEY, {str(user_id): return_pct}) # Add or update the user's score in the sorted set
 
 async def get_top_n(n: int) -> list[dict]:

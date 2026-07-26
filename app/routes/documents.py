@@ -145,7 +145,7 @@ async def delete(s3_key: str, user_id: int = Depends(get_session)):
 
         cursor.execute(
             """
-            SELECT id, docment_type FROM documents
+            SELECT id, document_type FROM documents
             WHERE s3_key = %s AND user_id = %s
             """,
             (s3_key, user_id)
