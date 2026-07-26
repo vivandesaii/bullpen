@@ -39,9 +39,8 @@ or tests without caring where the call came from.
 from SQS and processes them in the background so the API
 stays fast.
 
-**models/** defines what data looks like in Postgres — imported
-by services and routes to know the shape of users, trades,
-portfolios, holdings.
+**db/** contains the database connection helper and SQL migration files.
+Raw SQL is used throughout — no ORM. Every query is explicit and readable.
 
 **redis_client.py at app level** — one shared connection pool
 imported everywhere. Creating multiple pools would exhaust
@@ -115,8 +114,10 @@ docker-compose up
 ### Documents
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | /documents/{user_id} | List portfolio statements |
-| GET | /documents/{user_id}/{filename} | Presigned S3 download URL |
+| POST | /documents/upload | Upload document to S3 |
+| GET | /documents/download | Get presigned download URL |
+| POST | /documents/upload-url | Get presigned upload URL |
+| DELETE | /documents/delete | Delete document from S3 |
 
 ## Modules built
 
@@ -124,4 +125,4 @@ docker-compose up
 - [X] SQS: async trade processing
 - [X] S3: document storage
 - [X] Docker: containerization
-- [ ] PostgreSQL: schema, transactions, indexes
+- [x] PostgreSQL: schema, transactions, indexes
