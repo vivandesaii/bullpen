@@ -39,5 +39,6 @@ CREATE TABLE IF NOT EXISTS holdings (
     user_id INTEGER NOT NULL REFERENCES users(id),
     symbol VARCHAR(10) NOT NULL,
     quantity INTEGER NOT NULL DEFAULT 0 CHECK (quantity >= 0),
+    avg_price NUMERIC(15,4) NOT NULL DEFAULT 0,
     PRIMARY KEY (user_id, symbol)
 );
