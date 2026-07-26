@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from app.routes import auth, portfolio, trades, prices, leaderboard, documents
 
-app = FastAPI() # Entry point for the API
+app = FastAPI(title="Bullpen", version="1.0.0") # Entry point for the API
 
 # To run the API, use the command:
 # uvicorn app.main:app --reload 

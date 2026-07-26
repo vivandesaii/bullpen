@@ -6,7 +6,7 @@ from app.services.sessions import get_session
 router = APIRouter(prefix="/leaderboard", tags=["leaderboard"])
 
 
-@router.get("/", dependencies=[Depends(check_rate_limit)]) # Get the top N users in the leaderboard
+@router.get("", dependencies=[Depends(check_rate_limit)]) # Get the top N users in the leaderboard
 async def leaderboard(n: int = 10):
     """
     Endpoint to fetch the top N users in the leaderboard.
