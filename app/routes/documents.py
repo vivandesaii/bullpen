@@ -4,7 +4,7 @@ from app.services.s3_service import generate_presigned_upload_url, delete_file, 
 from app.config import settings
 from app.services.sessions import get_session
 from app.services.rate_limit import check_rate_limit
-# from app.db.connections import get_db
+from app.db.connection import get_connection
 import uuid
 
 router = APIRouter(prefix="/documents", tags=["documents"])
@@ -17,47 +17,96 @@ async def upload(file: UploadFile = File(...),
     """
     Endpoint to generate a presigned URL for uploading a document to S3.
     """
+    conn = get_connection()
+    cursor = conn.cursor()
 
-    # Validate the document type
-    ALLOWED = {"application/pdf", "image/jpeg", "image/png"}
-    if file.content_type not in ALLOWED:
-        raise HTTPException(status_code=400, detail="Invalid document type")
+    try:
 
-    # Validate file size
-    MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB — must stay <= LARGE_FILE_THRESHOLD in s3_service
-    file_bytes = await file.read()
-    if len(file_bytes) >= MAX_FILE_SIZE:
-        raise HTTPException(status_code=413, detail="File size exceeds the maximum limit of 10 MB")
+        # Validate the document type
+        ALLOWED = {"application/pdf", "image/jpeg", "image/png"}
+        if file.content_type not in ALLOWED:
+            raise HTTPException(status_code=400, detail="Invalid document type")
+
+        # Validate file size
+        MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB — must stay <= LARGE_FILE_THRESHOLD in s3_service
+        file_bytes = await file.read()
+        if len(file_bytes) >= MAX_FILE_SIZE:
+            raise HTTPException(status_code=413, detail="File size exceeds the maximum limit of 10 MB")
     
-    # Build s3 key using user_id and a unique identifier
-    key = (
-        f"documents/{user_id}/{document_type}/{uuid.uuid4()}-{file.filename}"
-    )
+            # Build s3 key using user_id and a unique identifier
+        key = (
+            f"documents/{user_id}/{document_type}/{uuid.uuid4()}-{file.filename}"
+        )
 
-    # Upload to s3
-    await upload_file(file_bytes, key, file.content_type)
-    # TODO: Store metadata in postgres
+        # Upload to s3
+        await upload_file(file_bytes, key, file.content_type)
 
-    return {
-        "s3_key": key,
-        "status": "uploaded"
-    }
+        cursor.execute(
+            """
+            INSERT INTO documents (user_id, s3_key, document_type, content_type)
+            VALUES (%s,%s,%s,%s)
+            RETURNING id
+            """,
+            (user_id, key, document_type, file.content_type)
+        )
+
+        document_id = cursor.fetchone()["id"]
+        conn.commit()
+
+        return {
+            "s3_key": key,
+            "status": "uploaded"
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Upload failed.")
+
+    finally:
+        cursor.close()
+        conn.close()
+
 
 @router.get("/download", tags=["documents"], dependencies=[Depends(check_rate_limit)])
 async def download(s3_key: str, user_id: int = Depends(get_session)):
     """
     Endpoint to generate a presigned URL for downloading a document from S3.
     """
-    
-    # TODO: Validate that the user has access to the requested document based on metadata stored in Postgres
-    # SELECT FROM documents WHERE id = key AND user_id = user["user_id"]
 
-    url = await generate_presigned_url(s3_key, expiration=settings.s3_presigned_url_expiration)
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        
+        cursor.execute(
+            """
+            SELECT id, s3_key, user_id FROM documents
+            WHERE s3_key = %s AND user_id = %s
+            """,
+            (s3_key, user_id)
+        )
 
-    return {
-        "url": url,
-        "expires_in": settings.s3_presigned_url_expiration
-    }
+        doc = cursor.fetchone()
+
+        if doc is None:
+            raise HTTPException(status_code=404, detail="Document not found.")
+
+        url = await generate_presigned_url(s3_key, expiration=settings.s3_presigned_url_expiration)
+
+        return {
+            "url": url,
+            "expires_in": settings.s3_presigned_url_expiration
+        }
+
+    except HTTPException:
+        raise
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Download failed.")
+
+    finally:
+        cursor.close()
+        conn.close()
 
 @router.post("/upload-url", tags=["documents"], dependencies=[Depends(check_rate_limit)])
 async def get_upload_url(document_type: str = Form(...),
@@ -89,30 +138,41 @@ async def delete(s3_key: str, user_id: int = Depends(get_session)):
     Only permitted for certain document types.
     Statements and trade confirmations cannot be deleted
     due to regulatory retention requirements.
-    TODO Module 10: look up document by id from Postgres,
-    verify ownership, check document_type before deleting.
     """
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
 
-    # TODO Module 10: replace this with a Postgres lookup
-    # SELECT document_type FROM documents
-    # WHERE s3_key = :key AND user_id = :user_id
-    # for now we infer document type from the key string
-    # this is a temporary workaround until DB is wired in
-
-    # ownership check: keys are documents/{user_id}/{document_type}/...
-    if not s3_key.startswith(f"documents/{user_id}/"):
-        raise HTTPException(status_code=403, detail="Not your document")
-
-    # regulatory protection -- cannot delete these document types
-    # (document_type is the third segment of the key)
-    PROTECTED_TYPES = {"statements", "confirmations"}
-    parts = s3_key.split("/")
-    if len(parts) > 2 and parts[2] in PROTECTED_TYPES:
-        raise HTTPException(
-            status_code=403,
-            detail="Regulatory documents cannot be deleted"
+        cursor.execute(
+            """
+            SELECT id, docment_type FROM documents
+            WHERE s3_key = %s AND user_id = %s
+            """,
+            (s3_key, user_id)
         )
 
-    await delete_file(s3_key)
+        doc = cursor.fetchone()
 
-    return {"status": "deleted", "s3_key": s3_key}
+        if doc is None:
+            raise HTTPException(status_code=404, detail="Document not found.")
+
+    # regulatory protection -- cannot delete these document types
+        PROTECTED_TYPES = {"statements", "confirmations"}
+        if doc["document_type"] in PROTECTED_TYPES:
+            raise HTTPException(
+                status_code=403,
+                detail="Regulatory documents cannot be deleted"
+            )
+
+        await delete_file(s3_key)
+
+        return {"status": "deleted", "s3_key": s3_key}
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Delete failed.")
+
+    finally:
+        cursor.close()
+        conn.close()
