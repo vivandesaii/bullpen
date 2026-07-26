@@ -32,6 +32,24 @@ async def get_session(session_id: str = Header(alias="X-Session-Id")) -> int:
     await redis_client.expire(key, SESSION_TTL) # Refresh the session expiration time on access
     return int(value)
 
+async def get_optional_session(session_id: Optional[str] = Header(default=None, alias="X-Session-Id")) -> Optional[int]:
+    """FastAPI dependency: resolves the X-Session-Id header to a user ID if present.
+
+    Unlike get_session, a missing/invalid header returns None instead of raising,
+    so unauthenticated endpoints (register, login) can still be rate limited.
+    """
+
+    if session_id is None:
+        return None
+
+    key = f"session:{session_id}"
+    value = await redis_client.get(key)
+    if value is None:
+        return None
+
+    await redis_client.expire(key, SESSION_TTL) # Refresh the session expiration time on access
+    return int(value)
+
 async def delete_session(session_id: str, user_id: int) -> None:
     """Deletes the session associated with the given session token."""
 

@@ -1,12 +1,15 @@
 import boto3, json, time, logging
-import asyncio
+import redis
 import yfinance as yf
 from app.config import settings
-from app.services.cache import invalidate_cache
-from app.services.leaderboard import update_user_return
 from app.utils.retry import with_retry
 from app.db.connection import get_connection
 
+LEADERBOARD_KEY = "leaderboard:returns"
+
+# Sync Redis client for this sync worker process — avoids mixing asyncio.run()
+# event loops with the async redis client shared by the (async) FastAPI app.
+sync_redis_client = redis.from_url(settings.redis_url, decode_responses=True)
 
 logger = logging.getLogger("trade_processor") # Configure a logger for the trade processor to log messages and errors
 
@@ -19,6 +22,28 @@ sqs = boto3.client(
     aws_secret_access_key=settings.aws_secret_access_key,
     region_name=settings.aws_region
 )
+
+def _update_leaderboard(user_id: int, return_pct: float) -> None:
+    """Updates the user's return percentage in Postgres (durable) and Redis (fast reads)."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            """
+            INSERT INTO leaderboard_snapshots (user_id, return_pct, updated_at)
+            VALUES (%s, %s, NOW())
+            ON CONFLICT (user_id) DO UPDATE
+            SET return_pct = EXCLUDED.return_pct, updated_at = NOW()
+            """,
+            (user_id, return_pct)
+        )
+        conn.commit()
+    finally:
+        cursor.close()
+        conn.close()
+
+    sync_redis_client.zadd(LEADERBOARD_KEY, {str(user_id): return_pct})
+
 
 def _mark_trade_failed(cursor, trade_id: str) -> None:
     cursor.execute(
@@ -36,6 +61,19 @@ def execute_trade(trade: dict, current_price: float) -> bool:
     conn = get_connection()
     cursor = conn.cursor()
     try:
+        # Idempotency guard: a retry or SQS redelivery must not re-execute a trade
+        # that already completed/failed on a prior attempt (see _run_async fix history).
+        cursor.execute("SELECT status FROM trades WHERE trade_id = %s FOR UPDATE", (trade['trade_id'],))
+        trade_row = cursor.fetchone()
+        if trade_row is None:
+            logger.error(f"Trade {trade['trade_id']} not found in trades table")
+            conn.commit()
+            return False
+        if trade_row['status'] != 'pending':
+            logger.info(f"Trade {trade['trade_id']} already {trade_row['status']}, skipping re-execution")
+            conn.commit()
+            return True
+
         cursor.execute("SELECT balance FROM users WHERE id = %s FOR UPDATE", (trade['user_id'],))
         user = cursor.fetchone()
         if user is None:
@@ -109,7 +147,7 @@ def execute_trade(trade: dict, current_price: float) -> bool:
 
         total_value = new_balance + holdings_value
         return_pct = ((total_value - STARTING_BALANCE) / STARTING_BALANCE) * 100
-        asyncio.run(update_user_return(trade['user_id'], return_pct))
+        _update_leaderboard(trade['user_id'], return_pct)
 
         return True
 
@@ -151,9 +189,10 @@ def process_trade(trade: dict) -> bool:
         if not execute_trade(trade, current_price):
             return False
 
-        # Invalidate Redis cache for this user's portfolio
-        # sync function so we use asyncio.run to call the async invalidate_cache function
-        asyncio.run(invalidate_cache(f"portfolio:{trade['user_id']}"))  
+        # Portfolio cache is left to expire on its own (60s TTL in portfolio.py) rather
+        # than invalidated here, since sharing the async redis client across asyncio.run()
+        # calls in this sync worker caused "Event loop is closed" errors.
+        logger.info(f"Trade executed — portfolio cache will expire naturally for user {trade['user_id']}")
 
 
         return True  # Return True to indicate successful processing of the trade

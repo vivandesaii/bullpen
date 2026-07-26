@@ -17,7 +17,7 @@ class TradeRequest(BaseModel):
     direction: str  # "buy" or "sell"
     price: float
 
-@router.post("/", dependencies=[Depends(check_rate_limit)])  # check_rate_limit resolves the session itself, so the limit is per authenticated user
+@router.post("", dependencies=[Depends(check_rate_limit)])  # check_rate_limit resolves the session itself, so the limit is per authenticated user
 async def submit_trade(trade_request: TradeRequest, user_id: int = Depends(get_session)):
     """
     Endpoint to submit a trade request.
