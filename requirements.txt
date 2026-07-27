@@ -10,7 +10,7 @@ async-lru==2.3.0
 async-timeout==5.0.1
 attrs==26.1.0
 babel==2.18.0
-bcrypt==3.2.2
+bcrypt==5.0.0
 beautifulsoup4==4.15.0
 bleach==6.4.0
 boto3==1.43.34
@@ -32,6 +32,7 @@ h11==0.16.0
 httpcore==1.0.9
 httpx==0.28.1
 idna==3.18
+iniconfig==2.3.0
 ipykernel==7.3.0
 ipython==9.14.1
 ipython_pygments_lexers==1.1.1
@@ -74,6 +75,7 @@ passlib==1.7.4
 peewee==4.2.6
 pexpect==4.9.0
 platformdirs==4.10.0
+pluggy==1.6.0
 prometheus_client==0.25.0
 prompt_toolkit==3.0.52
 protobuf==7.35.1
@@ -86,6 +88,8 @@ pydantic==2.13.4
 pydantic-settings==2.14.2
 pydantic_core==2.46.4
 Pygments==2.20.0
+pytest==9.1.1
+pytest-asyncio==1.4.0
 python-dateutil==2.9.0.post0
 python-dotenv==1.2.2
 python-json-logger==4.1.0

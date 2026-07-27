@@ -1,4 +1,4 @@
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     # Configuration for the application settings, including database, Redis, secret key, AWS S3 and SQS, and PostgreSQL credentials
@@ -21,7 +21,6 @@ class Settings(BaseSettings):
     postgres_user: str
     postgres_password: str
 
-    class Config:
-        env_file = ".env"
+    model_config = SettingsConfigDict(env_file=".env")
 
 settings = Settings() 
