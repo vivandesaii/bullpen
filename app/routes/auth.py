@@ -14,8 +14,17 @@ class User(BaseModel):
     email: str
     password: str
 
+class AuthResponse(BaseModel):
+    status: str
+    session_id: str
+    message: str
 
-@router.post("/register", tags=["auth"], dependencies=[Depends(check_rate_limit)])
+class MessageResponse(BaseModel):
+    status: str
+    message: str
+
+
+@router.post("/register", response_model=AuthResponse, tags=["auth"], dependencies=[Depends(check_rate_limit)])
 async def register_user(register_request: User):
     """
     Endpoint to register a new user.
@@ -54,7 +63,7 @@ async def register_user(register_request: User):
         conn.close()
 
 
-@router.post("/login", tags=["auth"], dependencies=[Depends(check_rate_limit)])
+@router.post("/login", tags=["auth"], response_model=AuthResponse, dependencies=[Depends(check_rate_limit)])
 async def login_user(login_request: User):
     """
     Endpoint to log in a user.
@@ -101,7 +110,7 @@ async def login_user(login_request: User):
 
 
 
-@router.post("/logout", tags=["auth"], dependencies=[Depends(check_rate_limit)])
+@router.post("/logout", tags=["auth"], response_model=MessageResponse, dependencies=[Depends(check_rate_limit)])
 async def logout_user(session_id: str = Header(alias="X-Session-Id"), user_id: int = Depends(get_session)):
     """
     Endpoint to log out a user.
@@ -111,7 +120,7 @@ async def logout_user(session_id: str = Header(alias="X-Session-Id"), user_id: i
     await delete_session(session_id, user_id)
     return {"status": "success", "message": "User logged out successfully."}
 
-@router.post("/logout-all", dependencies=[Depends(check_rate_limit)])
+@router.post("/logout-all",response_model=MessageResponse, dependencies=[Depends(check_rate_limit)])
 async def logout_all(user_id: int = Depends(get_session)):
     await delete_all_sessions(user_id)
     return {"status": "success", "message": "All sessions terminated."}

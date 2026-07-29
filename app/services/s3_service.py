@@ -1,6 +1,7 @@
 import boto3
 import asyncio
 import logging
+from typing import Optional
 from app.config import settings
 from app.utils.retry import with_retry
 
@@ -77,7 +78,7 @@ async def get_file_bytes(key: str) -> bytes:
     logger.info(f"Retrieved: {key} ({len(file_bytes)} bytes)")
     return file_bytes
 
-async def generate_presigned_url(key: str, expiration: int | None = None) -> str:
+async def generate_presigned_url(key: str, expiration: Optional[int] = None) -> str:
     """
     Generates a presigned URL for accessing an S3 object.
     """
@@ -97,7 +98,7 @@ async def generate_presigned_url(key: str, expiration: int | None = None) -> str
     return presigned_url
 
 
-async def generate_presigned_upload_url(key: str, content_type: str, expiration: int | None = None) -> str:
+async def generate_presigned_upload_url(key: str, content_type: str, expiration: Optional[int] = None) -> str:
     """
     Generates a presigned URL for uploading an S3 object.
     """

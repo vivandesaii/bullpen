@@ -3,11 +3,17 @@ from app.services.sessions import get_session
 from app.services.rate_limit import check_rate_limit
 from app.services.cache import get_cached, set_cache
 from app.db.connection import get_connection
+from pydantic import BaseModel
 
 
 router = APIRouter(prefix="/portfolio", tags=["portfolio"])
 
-@router.get("/me", dependencies=[Depends(check_rate_limit)])  # check_rate_limit resolves the session itself, so the limit is per authenticated user
+class PortfolioResponse(BaseModel):
+    user_id: int
+    portfolio: dict
+    source: str
+
+@router.get("/me", response_model=PortfolioResponse, dependencies=[Depends(check_rate_limit)])  # check_rate_limit resolves the session itself, so the limit is per authenticated user
 async def get_portfolio(user_id: int = Depends(get_session)):
     """
     Endpoint to fetch the portfolio of a given user.

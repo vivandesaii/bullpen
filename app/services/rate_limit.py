@@ -6,8 +6,6 @@ from app.services.sessions import get_optional_session
 
 async def check_rate_limit(
     request: Request,
-    limit: int = 100,
-    window: int = 60,
     user_id: Optional[int] = Depends(get_optional_session)
 ):
     """
@@ -18,6 +16,8 @@ async def check_rate_limit(
     (e.g. register, login, where no session can exist yet) fall back to
     the client's IP address.
     """
+    limit = 100
+    window = 60
     key = f"rate_limit:{user_id}" if user_id is not None else f"rate_limit:{request.client.host}"
 
     async with redis_client.pipeline(transaction=True) as pipe: # transaction=True ensures that the commands are executed atomically
