@@ -1,6 +1,7 @@
 import time
 import uuid
 from fastapi import APIRouter, Depends, HTTPException
+from typing import Literal
 from pydantic import BaseModel
 from datetime import datetime, timezone
 from app.services.sqs_service import send_trade_message
@@ -14,7 +15,7 @@ class TradeRequest(BaseModel):
     """Pydantic model for validating trade request payloads."""
     symbol: str
     quantity: int
-    direction: str  # "buy" or "sell"
+    direction: Literal["buy", "sell"]  # "buy" or "sell"
     price: float
 
 @router.post("", dependencies=[Depends(check_rate_limit)])  # check_rate_limit resolves the session itself, so the limit is per authenticated user
