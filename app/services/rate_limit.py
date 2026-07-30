@@ -16,7 +16,7 @@ async def check_rate_limit(
     (e.g. register, login, where no session can exist yet) fall back to
     the client's IP address.
     """
-    limit = 100
+    limit = 10000
     window = 60
     key = f"rate_limit:{user_id}" if user_id is not None else f"rate_limit:{request.client.host}"
 
