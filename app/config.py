@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     s3_presigned_url_expiration: int = 3600  # Default expiration time for presigned URLs in seconds
     sqs_queue_url: str
     sqs_dlq_url: str
-    aws_endpoint_url: str = "http://localstack:4566"
+    aws_endpoint_url: Optional[str] = None
 
     # These are only used to configure the Postgres/SQS containers
     # themselves in docker-compose.yaml — the app connects via

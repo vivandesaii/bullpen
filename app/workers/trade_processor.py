@@ -31,14 +31,17 @@ logger = logging.getLogger("trade_processor")  # Logger so we can see what the w
 STARTING_BALANCE = 100000.00
 
 # The SQS client this worker uses to pull trade messages off the queue.
-# endpoint_url points at LocalStack in dev instead of real AWS.
-sqs = boto3.client(
-    'sqs',
-    endpoint_url=settings.aws_endpoint_url,
-    aws_access_key_id=settings.aws_access_key_id,
-    aws_secret_access_key=settings.aws_secret_access_key,
-    region_name=settings.aws_region
-)
+# endpoint_url points at LocalStack in dev (set via AWS_ENDPOINT_URL in
+# .env). Left unset, this talks to real AWS — no LocalStack fallback.
+_sqs_client_kwargs = {
+    "aws_access_key_id": settings.aws_access_key_id,
+    "aws_secret_access_key": settings.aws_secret_access_key,
+    "region_name": settings.aws_region,
+}
+if settings.aws_endpoint_url:
+    _sqs_client_kwargs["endpoint_url"] = settings.aws_endpoint_url
+
+sqs = boto3.client('sqs', **_sqs_client_kwargs)
 
 
 def _update_leaderboard(user_id: int, return_pct: float) -> None:

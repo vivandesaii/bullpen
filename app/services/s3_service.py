@@ -9,13 +9,17 @@ LARGE_FILE_THRESHOLD = 10 * 1024 * 1024  # 10 MB
 
 logger = logging.getLogger("s3_service")
 
-s3_client = boto3.client(
-    "s3",
-    endpoint_url=settings.aws_endpoint_url,
-    aws_access_key_id=settings.aws_access_key_id,
-    aws_secret_access_key=settings.aws_secret_access_key,
-    region_name=settings.aws_region,
-)
+# endpoint_url points at LocalStack in dev (set via AWS_ENDPOINT_URL in
+# .env). Left unset, this talks to real AWS — no LocalStack fallback.
+_s3_client_kwargs = {
+    "aws_access_key_id": settings.aws_access_key_id,
+    "aws_secret_access_key": settings.aws_secret_access_key,
+    "region_name": settings.aws_region,
+}
+if settings.aws_endpoint_url:
+    _s3_client_kwargs["endpoint_url"] = settings.aws_endpoint_url
+
+s3_client = boto3.client("s3", **_s3_client_kwargs)
 
 async def upload_file(file_bytes: bytes, key: str, content_type: str = "application/octet-stream") -> str:
     """

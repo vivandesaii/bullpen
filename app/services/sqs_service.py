@@ -5,13 +5,17 @@ import uuid
 
 from app.config import settings
 
-sqs_client = boto3.client(
-    'sqs',
-    endpoint_url=settings.aws_endpoint_url,
-    aws_access_key_id=settings.aws_access_key_id,
-    aws_secret_access_key=settings.aws_secret_access_key,
-    region_name=settings.aws_region
-)
+# endpoint_url points at LocalStack in dev (set via AWS_ENDPOINT_URL in
+# .env). Left unset, this talks to real AWS — no LocalStack fallback.
+_sqs_client_kwargs = {
+    "aws_access_key_id": settings.aws_access_key_id,
+    "aws_secret_access_key": settings.aws_secret_access_key,
+    "region_name": settings.aws_region,
+}
+if settings.aws_endpoint_url:
+    _sqs_client_kwargs["endpoint_url"] = settings.aws_endpoint_url
+
+sqs_client = boto3.client('sqs', **_sqs_client_kwargs)
 
 async def send_trade_message(trade_data: dict, user_id: int) -> dict:
     """Sends a trade message to the SQS queue and returns the response."""
