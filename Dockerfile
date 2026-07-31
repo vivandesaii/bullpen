@@ -12,6 +12,11 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Stage 2 — runtime
 FROM python:3.11-slim AS runtime
 
+# Baked into the image so logs stream immediately regardless of how the
+# container is started (docker run, docker-compose, Railway, etc.) instead
+# of sitting in a stdout buffer until the process exits.
+ENV PYTHONUNBUFFERED=1
+
 WORKDIR /app
 COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
 COPY --from=builder /usr/local/bin /usr/local/bin
