@@ -1,6 +1,6 @@
 from typing import Optional
 from app.redis_client import redis_client
-from app.db.connection import get_connection
+from app.db.connection import get_connection, release_connection
 
 LEADERBOARD_KEY = "leaderboard:returns"
 
@@ -21,7 +21,7 @@ async def update_user_return(user_id: int, return_pct: float) -> None:
         conn.commit()
     finally:
         cursor.close()
-        conn.close()
+        release_connection(conn)
 
     await redis_client.zadd(LEADERBOARD_KEY, {str(user_id): return_pct}) # Add or update the user's score in the sorted set
 

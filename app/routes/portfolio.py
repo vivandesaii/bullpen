@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from app.services.sessions import get_session
 from app.services.rate_limit import check_rate_limit
 from app.services.cache import get_cached, set_cache
-from app.db.connection import get_connection
+from app.db.connection import get_connection, release_connection
 from pydantic import BaseModel
 
 
@@ -78,6 +78,6 @@ async def get_portfolio(user_id: int = Depends(get_session)):
 
     finally:
         cursor.close()
-        conn.close()
+        release_connection(conn)
 
 

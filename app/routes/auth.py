@@ -3,7 +3,7 @@ from app.services.sessions import get_session, create_session, delete_session, d
 from app.services.rate_limit import check_rate_limit
 from pydantic import BaseModel
 from passlib.context import CryptContext
-from app.db.connection import get_connection
+from app.db.connection import get_connection, release_connection
 
 pwd_context = CryptContext(schemes=["bcrypt"])
 
@@ -60,7 +60,7 @@ async def register_user(register_request: User):
 
     finally:
         cursor.close()
-        conn.close()
+        release_connection(conn)
 
 
 @router.post("/login", tags=["auth"], response_model=AuthResponse, dependencies=[Depends(check_rate_limit)])
@@ -106,7 +106,7 @@ async def login_user(login_request: User):
 
     finally:
         cursor.close()
-        conn.close()
+        release_connection(conn)
 
 
 

@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 from app.services.sqs_service import send_trade_message
 from app.services.sessions import get_session
 from app.services.rate_limit import check_rate_limit
-from app.db.connection import get_connection
+from app.db.connection import get_connection, release_connection
 
 router = APIRouter(prefix="/trades", tags=["trades"])  # Create a new router for trade-related endpoints
 
@@ -75,4 +75,4 @@ async def submit_trade(trade_request: TradeRequest, user_id: int = Depends(get_s
 
     finally:
         cursor.close()
-        conn.close()
+        release_connection(conn)

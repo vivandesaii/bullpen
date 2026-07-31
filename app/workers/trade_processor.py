@@ -8,7 +8,7 @@ import redis
 import yfinance as yf
 from app.config import settings
 from app.utils.retry import with_retry
-from app.db.connection import get_connection
+from app.db.connection import get_connection, release_connection
 
 # The Redis sorted-set key where we keep everyone's leaderboard score.
 LEADERBOARD_KEY = "leaderboard:returns"
@@ -66,7 +66,7 @@ def _update_leaderboard(user_id: int, return_pct: float) -> None:
         # Always close the DB connection, whether the insert worked or not,
         # so we don't leak connections.
         cursor.close()
-        conn.close()
+        release_connection(conn)
 
     # Also update the fast, in-memory copy of the leaderboard in Redis.
     sync_redis_client.zadd(LEADERBOARD_KEY, {str(user_id): return_pct})
@@ -227,7 +227,7 @@ def execute_trade(trade: dict, current_price: float) -> bool:
     finally:
         # Always release the DB connection back to the pool, success or failure.
         cursor.close()
-        conn.close()
+        release_connection(conn)
 
 
 def process_trade(trade: dict) -> bool:

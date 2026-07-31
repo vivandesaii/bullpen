@@ -4,7 +4,7 @@ from app.services.s3_service import generate_presigned_upload_url, delete_file, 
 from app.config import settings
 from app.services.sessions import get_session
 from app.services.rate_limit import check_rate_limit
-from app.db.connection import get_connection
+from app.db.connection import get_connection, release_connection
 import uuid
 
 router = APIRouter(prefix="/documents", tags=["documents"])
@@ -65,7 +65,7 @@ async def upload(file: UploadFile = File(...),
 
     finally:
         cursor.close()
-        conn.close()
+        release_connection(conn)
 
 
 @router.get("/download", tags=["documents"], dependencies=[Depends(check_rate_limit)])
@@ -106,7 +106,7 @@ async def download(s3_key: str, user_id: int = Depends(get_session)):
 
     finally:
         cursor.close()
-        conn.close()
+        release_connection(conn)
 
 @router.post("/upload-url", tags=["documents"], dependencies=[Depends(check_rate_limit)])
 async def get_upload_url(document_type: str = Form(...),
@@ -175,4 +175,4 @@ async def delete(s3_key: str, user_id: int = Depends(get_session)):
 
     finally:
         cursor.close()
-        conn.close()
+        release_connection(conn)
