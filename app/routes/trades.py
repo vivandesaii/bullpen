@@ -23,6 +23,14 @@ class TradeResponse(BaseModel):
     trade_id: str
     message: str
 
+class TradeStatusResponse(BaseModel):
+    trade_id: str
+    status: str
+    symbol: str
+    quantity: int
+    price: float
+    direction: str
+
 @router.post("", response_model=TradeResponse, dependencies=[Depends(check_rate_limit)])  # check_rate_limit resolves the session itself, so the limit is per authenticated user
 async def submit_trade(trade_request: TradeRequest, user_id: int = Depends(get_session)):
     """
@@ -72,6 +80,49 @@ async def submit_trade(trade_request: TradeRequest, user_id: int = Depends(get_s
     except Exception as e:
         conn.rollback()
         raise HTTPException(status_code=500, detail="Failed to submit trade.")
+
+    finally:
+        cursor.close()
+        release_connection(conn)
+
+
+@router.get("/{trade_id}", response_model=TradeStatusResponse, dependencies=[Depends(check_rate_limit)])
+async def get_trade(trade_id: str, user_id: int = Depends(get_session)):
+    """
+    Endpoint to check the current status of a submitted trade.
+    Used by the client to poll pending -> completed/failed after submission.
+    """
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            """
+            SELECT trade_id, status, symbol, quantity, price, direction
+            FROM trades
+            WHERE trade_id = %s AND user_id = %s
+            """,
+            (trade_id, user_id)
+        )
+
+        trade = cursor.fetchone()
+
+        if trade is None:
+            raise HTTPException(status_code=404, detail="Trade not found.")
+
+        return {
+            "trade_id": str(trade["trade_id"]),
+            "status": trade["status"],
+            "symbol": trade["symbol"],
+            "quantity": trade["quantity"],
+            "price": float(trade["price"]),
+            "direction": trade["direction"]
+        }
+
+    except HTTPException:
+        raise
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Failed to fetch trade status.")
 
     finally:
         cursor.close()

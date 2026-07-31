@@ -1,7 +1,17 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from app.routes import auth, portfolio, trades, prices, leaderboard, documents
 
 app = FastAPI(title="Bullpen", version="1.0.0") # Entry point for the API
+
+# Allows the static frontend (served from file:// or a separate dev server)
+# to call the API with the X-Session-Id header.
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # To run the API, use the command:
 # uvicorn app.main:app --reload 

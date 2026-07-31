@@ -1,0 +1,1122 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Bullpen — Paper Trading</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --text: #1A1A1A;
+    --bg: #F7F6F3;
+    --secondary: #6B6B6B;
+    --border: #E2E0DB;
+    --green: #16A34A;
+    --red: #DC2626;
+    --card: #FFFFFF;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+  }
+
+  .mono {
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  a { color: inherit; }
+
+  /* ---------- App shell: sidebar + main ---------- */
+  .app {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    min-height: 100vh;
+    align-items: start;
+  }
+
+  .sidebar {
+    border-right: 1px solid var(--border);
+    padding: 32px 24px;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+  }
+
+  .main {
+    padding: 32px 32px 80px 32px;
+  }
+
+  /* ---------- Brand ---------- */
+  .brand {
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-bottom: 4px;
+  }
+
+  .brand-sub {
+    font-size: 12px;
+    color: var(--secondary);
+    margin-bottom: 32px;
+  }
+
+  /* ---------- Cards ---------- */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    padding: 20px;
+  }
+
+  .card + .card {
+    margin-top: 20px;
+  }
+
+  .card-title {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--secondary);
+    margin: 0 0 16px 0;
+  }
+
+  /* ---------- Forms ---------- */
+  label {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--secondary);
+    margin-bottom: 6px;
+  }
+
+  .field {
+    margin-bottom: 14px;
+  }
+
+  input[type="text"],
+  input[type="password"],
+  input[type="number"],
+  input[type="email"],
+  select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+  }
+
+  input:focus, select:focus {
+    outline: none;
+    border-color: var(--text);
+  }
+
+  input[data-mono] {
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  button {
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    font-size: 13px;
+    padding: 10px 16px;
+    border: 1px solid var(--text);
+    background: var(--text);
+    color: var(--card);
+    cursor: pointer;
+  }
+
+  button:hover { opacity: 0.85; }
+  button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  button.secondary {
+    background: transparent;
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+
+  button.buy {
+    background: var(--green);
+    border-color: var(--green);
+  }
+
+  button.sell {
+    background: var(--red);
+    border-color: var(--red);
+  }
+
+  .btn-row {
+    display: flex;
+    gap: 8px;
+  }
+
+  .btn-row button { flex: 1; }
+
+  /* ---------- Tabs for auth ---------- */
+  .tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 20px;
+  }
+
+  .tab {
+    flex: 1;
+    text-align: left;
+    padding: 8px 0;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--secondary);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+  }
+
+  .tab.active {
+    color: var(--text);
+    border-bottom-color: var(--text);
+  }
+
+  /* ---------- Session badge ---------- */
+  .session-box {
+    margin-top: 20px;
+    padding: 12px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+  }
+
+  .session-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--secondary);
+    margin-bottom: 4px;
+  }
+
+  .session-id {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    word-break: break-all;
+    color: var(--text);
+  }
+
+  /* ---------- Messages ---------- */
+  .msg {
+    font-size: 12px;
+    padding: 8px 10px;
+    margin-top: 10px;
+    border-left: 3px solid var(--secondary);
+    background: var(--bg);
+  }
+
+  .msg.error {
+    border-left-color: var(--red);
+    color: var(--red);
+  }
+
+  .msg.success {
+    border-left-color: var(--green);
+    color: var(--green);
+  }
+
+  /* ---------- Dashboard grid ---------- */
+  .dashboard {
+    display: grid;
+    grid-template-columns: 1.1fr 1fr 0.9fr;
+    gap: 20px;
+    align-items: start;
+  }
+
+  @media (max-width: 1100px) {
+    .dashboard { grid-template-columns: 1fr; }
+    .app { grid-template-columns: 1fr; }
+    .sidebar { position: relative; height: auto; }
+  }
+
+  .section-heading {
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--secondary);
+    margin: 40px 0 16px 0;
+  }
+
+  .section-heading:first-child { margin-top: 0; }
+
+  /* ---------- Portfolio ---------- */
+  .balance-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--secondary);
+    margin-bottom: 4px;
+  }
+
+  .balance-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 30px;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 8px;
+  }
+
+  .return-pill {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 3px 8px;
+    margin-bottom: 16px;
+  }
+
+  .return-pill.pos { color: var(--green); background: rgba(22,163,74,0.1); }
+  .return-pill.neg { color: var(--red); background: rgba(220,38,38,0.1); }
+  .return-pill.flat { color: var(--secondary); background: var(--bg); }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+
+  th {
+    text-align: left;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--secondary);
+    font-weight: 600;
+    padding: 6px 4px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  td {
+    padding: 8px 4px;
+    border-bottom: 1px solid var(--border);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  tr:last-child td { border-bottom: none; }
+
+  .empty-row {
+    color: var(--secondary);
+    font-family: 'Inter', sans-serif;
+    font-style: normal;
+    font-size: 13px;
+    padding: 12px 4px;
+  }
+
+  /* ---------- Price lookup ---------- */
+  .price-search {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  .price-search input { flex: 1; text-transform: uppercase; }
+
+  .price-result {
+    border: 1px solid var(--border);
+    padding: 16px;
+    margin-bottom: 10px;
+  }
+
+  .price-top-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 10px;
+  }
+
+  .price-symbol {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    font-weight: 700;
+  }
+
+  .price-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 26px;
+    font-weight: 700;
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    padding: 3px 8px;
+    border: 1px solid transparent;
+  }
+
+  .badge::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    display: inline-block;
+    border-radius: 50%;
+  }
+
+  .badge.cache {
+    color: var(--green);
+    background: rgba(22,163,74,0.08);
+    border-color: rgba(22,163,74,0.3);
+  }
+  .badge.cache::before { background: var(--green); }
+
+  .badge.live {
+    color: #B45309;
+    background: rgba(180,83,9,0.08);
+    border-color: rgba(180,83,9,0.3);
+  }
+  .badge.live::before { background: #B45309; }
+
+  .price-meta {
+    font-size: 11px;
+    color: var(--secondary);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .price-history-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 12px;
+  }
+
+  .price-history-item:last-child { border-bottom: none; }
+
+  /* ---------- Leaderboard ---------- */
+  .lb-row {
+    display: grid;
+    grid-template-columns: 28px 1fr auto;
+    gap: 10px;
+    align-items: center;
+    padding: 9px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+  }
+
+  .lb-row:last-child { border-bottom: none; }
+
+  .lb-rank {
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--secondary);
+    font-size: 12px;
+  }
+
+  .lb-user {
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .lb-return {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+  }
+
+  /* ---------- Trade form ---------- */
+  .trade-card {
+    margin-top: 20px;
+  }
+
+  .trade-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 14px;
+    align-items: end;
+  }
+
+  .trade-result {
+    margin-top: 16px;
+    padding: 14px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    font-size: 13px;
+  }
+
+  .trade-result .kv {
+    display: flex;
+    justify-content: space-between;
+    padding: 4px 0;
+  }
+
+  .kv span:first-child {
+    color: var(--secondary);
+    font-family: 'Inter', sans-serif;
+  }
+
+  .kv span:last-child {
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .status-pill {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 8px;
+    text-transform: uppercase;
+  }
+
+  .status-pill.queued, .status-pill.pending { color: #B45309; background: rgba(180,83,9,0.1); }
+  .status-pill.success, .status-pill.filled, .status-pill.completed { color: var(--green); background: rgba(22,163,74,0.1); }
+  .status-pill.error, .status-pill.rejected, .status-pill.failed { color: var(--red); background: rgba(220,38,38,0.1); }
+
+  .refresh-note {
+    font-size: 11px;
+    color: var(--secondary);
+    margin-top: 10px;
+  }
+
+  #portfolio-source {
+    font-family: 'JetBrains Mono', monospace;
+    text-transform: uppercase;
+    font-size: 10px;
+    letter-spacing: 0.04em;
+    opacity: 0.7;
+  }
+
+  .locked-overlay {
+    padding: 60px 32px;
+    color: var(--secondary);
+    font-size: 14px;
+    max-width: 420px;
+  }
+
+  .locked-overlay strong { color: var(--text); }
+
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ============ SIDEBAR: AUTH ============ -->
+  <aside class="sidebar">
+    <div class="brand">bullpen</div>
+    <div class="brand-sub">paper trading competition api demo</div>
+
+    <div id="auth-panel">
+      <div class="tabs">
+        <div class="tab active" data-tab="login" id="tab-login">log in</div>
+        <div class="tab" data-tab="register" id="tab-register">register</div>
+      </div>
+
+      <form id="auth-form">
+        <div class="field">
+          <label for="auth-email">email</label>
+          <input type="email" id="auth-email" required placeholder="trader@bullpen.dev" />
+        </div>
+        <div class="field">
+          <label for="auth-password">password</label>
+          <input type="password" id="auth-password" required placeholder="••••••••" />
+        </div>
+        <button type="submit" id="auth-submit" style="width:100%;">log in</button>
+      </form>
+
+      <div id="auth-msg"></div>
+    </div>
+
+    <div id="session-panel" class="hidden">
+      <div class="session-box">
+        <div class="session-label">Session ID</div>
+        <div class="session-id mono" id="session-id-display">—</div>
+      </div>
+      <div style="margin-top:12px;" class="btn-row">
+        <button class="secondary" id="logout-btn" style="width:100%;">log out</button>
+      </div>
+      <div id="session-msg"></div>
+    </div>
+  </aside>
+
+  <!-- ============ MAIN ============ -->
+  <main class="main">
+
+    <div id="locked-view">
+      <div class="locked-overlay">
+        <strong>Not authenticated.</strong><br /><br />
+        Log in or register from the panel on the left to view your portfolio,
+        look up live prices, check the leaderboard, and submit trades.
+      </div>
+    </div>
+
+    <div id="unlocked-view" class="hidden">
+
+      <div class="section-heading">dashboard</div>
+
+      <div class="dashboard">
+
+        <!-- LEFT: PORTFOLIO -->
+        <div class="card">
+          <div class="card-title">portfolio</div>
+
+          <div class="balance-label">balance</div>
+          <div class="balance-value mono" id="portfolio-balance">$0.00</div>
+          <div class="return-pill flat" id="portfolio-return">0.00%</div>
+
+          <table>
+            <thead>
+              <tr>
+                <th>Symbol</th>
+                <th>Qty</th>
+                <th>Avg Price</th>
+              </tr>
+            </thead>
+            <tbody id="holdings-body">
+              <tr><td colspan="3" class="empty-row">No holdings yet.</td></tr>
+            </tbody>
+          </table>
+
+          <div class="refresh-note">Auto refreshes every 30s. <span id="portfolio-source"></span></div>
+          <div id="portfolio-msg"></div>
+        </div>
+
+        <!-- CENTER: UNIFIED QUOTE + TRADE -->
+        <div class="card">
+          <div class="card-title">Trade</div>
+
+          <div class="field">
+            <label for="ticker-input">Ticker</label>
+            <div class="price-search">
+              <input type="text" id="ticker-input" list="ticker-options" placeholder="AAPL" maxlength="10" style="text-transform:uppercase;" />
+              <button id="get-quote-btn">Get Quote</button>
+            </div>
+            <datalist id="ticker-options">
+              <option value="AAPL">
+              <option value="SHOP.TO">
+              <option value="VFV.TO">
+              <option value="MSFT">
+              <option value="GOOGL">
+              <option value="AMZN">
+              <option value="TSLA">
+              <option value="NVDA">
+              <option value="RY.TO">
+              <option value="TD.TO">
+              <option value="XEQT.TO">
+              <option value="QQQ">
+              <option value="SPY">
+            </datalist>
+          </div>
+
+          <div id="price-result-container"></div>
+          <div id="price-msg"></div>
+
+          <form id="trade-form">
+            <div class="trade-grid" style="grid-template-columns: 1fr 1fr;">
+              <div class="field" style="margin-bottom:0;">
+                <label for="trade-quantity">Quantity</label>
+                <input type="number" id="trade-quantity" data-mono required min="1" step="1" placeholder="10" />
+              </div>
+              <div class="field" style="margin-bottom:0;">
+                <label for="trade-price">Price</label>
+                <input type="number" id="trade-price" data-mono required min="0" step="0.01" placeholder="192.35" />
+              </div>
+            </div>
+
+            <div class="btn-row" style="margin-top:16px;">
+              <button type="submit" class="buy" data-direction="buy" id="buy-btn">Buy</button>
+              <button type="submit" class="sell" data-direction="sell" id="sell-btn">Sell</button>
+            </div>
+          </form>
+
+          <div id="trade-result-container"></div>
+          <div id="trade-msg"></div>
+
+          <div id="price-history"></div>
+        </div>
+
+        <!-- RIGHT: LEADERBOARD -->
+        <div class="card">
+          <div class="card-title">Leaderboard: Top 10</div>
+          <div id="leaderboard-list">
+            <div class="empty-row">Loading leaderboard…</div>
+          </div>
+          <div class="refresh-note">Auto-refreshes every 10s.</div>
+          <div id="leaderboard-msg"></div>
+        </div>
+
+      </div>
+
+    </div>
+
+  </main>
+
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  const API_BASE = "http://localhost:8000";
+
+  // ---------------- State ----------------
+  let sessionId = null; // in-memory only, never persisted
+  let portfolioTimer = null;
+  let leaderboardTimer = null;
+  let priceHistory = [];
+  let authMode = "login"; // or "register"
+  let portfolioReqId = 0;
+  let leaderboardReqId = 0;
+  let tradePollTimer = null;
+
+  // ---------------- DOM refs ----------------
+  const authPanel = document.getElementById("auth-panel");
+  const sessionPanel = document.getElementById("session-panel");
+  const authForm = document.getElementById("auth-form");
+  const authEmail = document.getElementById("auth-email");
+  const authPassword = document.getElementById("auth-password");
+  const authSubmit = document.getElementById("auth-submit");
+  const authMsg = document.getElementById("auth-msg");
+  const tabLogin = document.getElementById("tab-login");
+  const tabRegister = document.getElementById("tab-register");
+  const sessionIdDisplay = document.getElementById("session-id-display");
+  const logoutBtn = document.getElementById("logout-btn");
+  const sessionMsg = document.getElementById("session-msg");
+
+  const lockedView = document.getElementById("locked-view");
+  const unlockedView = document.getElementById("unlocked-view");
+
+  const portfolioBalance = document.getElementById("portfolio-balance");
+  const portfolioReturn = document.getElementById("portfolio-return");
+  const holdingsBody = document.getElementById("holdings-body");
+  const portfolioMsg = document.getElementById("portfolio-msg");
+  const portfolioSource = document.getElementById("portfolio-source");
+
+  const tickerInput = document.getElementById("ticker-input");
+  const getQuoteBtn = document.getElementById("get-quote-btn");
+  const priceResultContainer = document.getElementById("price-result-container");
+  const priceMsg = document.getElementById("price-msg");
+  const priceHistoryEl = document.getElementById("price-history");
+
+  const leaderboardList = document.getElementById("leaderboard-list");
+  const leaderboardMsg = document.getElementById("leaderboard-msg");
+
+  const tradeForm = document.getElementById("trade-form");
+  const tradeQuantity = document.getElementById("trade-quantity");
+  const tradePrice = document.getElementById("trade-price");
+  const tradeResultContainer = document.getElementById("trade-result-container");
+  const tradeMsg = document.getElementById("trade-msg");
+
+  // ---------------- Helpers ----------------
+
+  function escapeHtml(str) {
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  function formatMoney(n) {
+    const num = Number(n);
+    if (Number.isNaN(num)) return "$0.00";
+    return "$" + num.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  function formatPct(n) {
+    const num = Number(n);
+    if (Number.isNaN(num)) return "0.00%";
+    const sign = num > 0 ? "+" : "";
+    return sign + num.toFixed(2) + "%";
+  }
+
+  function setMsg(el, text, type) {
+    if (!text) { el.innerHTML = ""; return; }
+    el.innerHTML = '<div class="msg ' + (type || "") + '">' + escapeHtml(text) + "</div>";
+  }
+
+  async function apiCall(path, options) {
+    options = options || {};
+    const headers = Object.assign({ "Content-Type": "application/json" }, options.headers || {});
+    if (sessionId) headers["X-Session-Id"] = sessionId;
+
+    let response;
+    try {
+      response = await fetch(API_BASE + path, {
+        method: options.method || "GET",
+        headers: headers,
+        body: options.body ? JSON.stringify(options.body) : undefined
+      });
+    } catch (networkErr) {
+      throw new Error("Network error — is the API running at " + API_BASE + "?");
+    }
+
+    let data = null;
+    try {
+      data = await response.json();
+    } catch (parseErr) {
+      data = null;
+    }
+
+    if (!response.ok) {
+      const detail = (data && (data.detail || data.message)) || ("Request failed (" + response.status + ")");
+      throw new Error(typeof detail === "string" ? detail : JSON.stringify(detail));
+    }
+
+    return data;
+  }
+
+  // ---------------- Auth ----------------
+
+  function setAuthMode(mode) {
+    authMode = mode;
+    tabLogin.classList.toggle("active", mode === "login");
+    tabRegister.classList.toggle("active", mode === "register");
+    authSubmit.textContent = mode === "login" ? "Log In" : "Create Account";
+    setMsg(authMsg, "");
+  }
+
+  tabLogin.addEventListener("click", function () { setAuthMode("login"); });
+  tabRegister.addEventListener("click", function () { setAuthMode("register"); });
+
+  authForm.addEventListener("submit", async function (e) {
+    e.preventDefault();
+    setMsg(authMsg, "");
+
+    const email = authEmail.value.trim();
+    const password = authPassword.value;
+
+    if (!email || !password) {
+      setMsg(authMsg, "Email and password are required.", "error");
+      return;
+    }
+
+    const path = authMode === "login" ? "/auth/login" : "/auth/register";
+    authSubmit.disabled = true;
+
+    try {
+      const data = await apiCall(path, {
+        method: "POST",
+        body: { email: email, password: password }
+      });
+      sessionId = data.session_id;
+      onAuthenticated();
+    } catch (err) {
+      setMsg(authMsg, err.message, "error");
+    } finally {
+      authSubmit.disabled = false;
+    }
+  });
+
+  logoutBtn.addEventListener("click", async function () {
+    setMsg(sessionMsg, "");
+    try {
+      await apiCall("/auth/logout", { method: "POST" });
+    } catch (err) {
+      // logout failing server-side shouldn't trap the user client-side
+    }
+    onLoggedOut();
+  });
+
+  function onAuthenticated() {
+    authPanel.classList.add("hidden");
+    sessionPanel.classList.remove("hidden");
+    sessionIdDisplay.textContent = sessionId.slice(0, 8) + "...";
+    sessionIdDisplay.title = sessionId;
+
+    lockedView.classList.add("hidden");
+    unlockedView.classList.remove("hidden");
+
+    refreshPortfolio();
+    refreshLeaderboard();
+
+    portfolioTimer = setInterval(refreshPortfolio, 30000);
+    leaderboardTimer = setInterval(refreshLeaderboard, 10000);
+  }
+
+  function onLoggedOut() {
+    sessionId = null;
+    priceHistory = [];
+
+    if (portfolioTimer) clearInterval(portfolioTimer);
+    if (leaderboardTimer) clearInterval(leaderboardTimer);
+    stopTradePolling();
+
+    authPanel.classList.remove("hidden");
+    sessionPanel.classList.add("hidden");
+    unlockedView.classList.add("hidden");
+    lockedView.classList.remove("hidden");
+
+    authForm.reset();
+    setMsg(authMsg, "");
+    setMsg(sessionMsg, "");
+    priceResultContainer.innerHTML = "";
+    priceHistoryEl.innerHTML = "";
+    tradeResultContainer.innerHTML = "";
+  }
+
+  // ---------------- Portfolio ----------------
+
+  async function refreshPortfolio() {
+    const reqId = ++portfolioReqId;
+    try {
+      const data = await apiCall("/portfolio/me");
+      if (reqId !== portfolioReqId) return; // a newer request already resolved
+      renderPortfolio(data);
+      setMsg(portfolioMsg, "");
+    } catch (err) {
+      if (reqId !== portfolioReqId) return;
+      setMsg(portfolioMsg, err.message, "error");
+    }
+  }
+
+  function renderPortfolio(data) {
+    const portfolio = data.portfolio || {};
+    const balance = portfolio.balance != null ? portfolio.balance : 0;
+    const holdings = portfolio.holdings || [];
+
+    portfolioBalance.textContent = formatMoney(balance);
+    portfolioSource.textContent = data.source || "";
+
+    // Return % — computed client-side from holdings cost basis vs balance
+    // if the API doesn't provide it directly.
+    let returnPct = 0;
+    if (typeof portfolio.return_pct === "number") {
+      returnPct = portfolio.return_pct;
+    }
+    portfolioReturn.textContent = formatPct(returnPct);
+    portfolioReturn.className = "return-pill " + (returnPct > 0 ? "pos" : returnPct < 0 ? "neg" : "flat");
+
+    if (!holdings.length) {
+      holdingsBody.innerHTML = '<tr><td colspan="3" class="empty-row">No holdings yet.</td></tr>';
+      return;
+    }
+
+    holdingsBody.innerHTML = holdings.map(function (h) {
+      return "<tr>" +
+        "<td>" + escapeHtml(h.symbol) + "</td>" +
+        "<td>" + escapeHtml(h.quantity) + "</td>" +
+        "<td>" + formatMoney(h.avg_price) + "</td>" +
+        "</tr>";
+    }).join("");
+  }
+
+  // ---------------- Price lookup ----------------
+
+  getQuoteBtn.addEventListener("click", lookupPrice);
+  tickerInput.addEventListener("keydown", function (e) {
+    if (e.key === "Enter") { e.preventDefault(); lookupPrice(); }
+  });
+
+  async function lookupPrice() {
+    const symbol = tickerInput.value.trim().toUpperCase();
+    setMsg(priceMsg, "");
+
+    if (!symbol) {
+      setMsg(priceMsg, "Enter or pick a ticker first.", "error");
+      return;
+    }
+
+    tickerInput.value = symbol;
+    getQuoteBtn.disabled = true;
+    const start = performance.now();
+
+    try {
+      const data = await apiCall("/prices/" + encodeURIComponent(symbol));
+      const latencyMs = Math.round(performance.now() - start);
+      renderPriceResult(data, latencyMs);
+      // Same ticker feeds both the quote and the trade — only the
+      // price needs to be carried over into the trade form.
+      tradePrice.value = Number(data.price).toFixed(2);
+    } catch (err) {
+      setMsg(priceMsg, err.message, "error");
+    } finally {
+      getQuoteBtn.disabled = false;
+    }
+  }
+
+  function renderPriceResult(data, latencyMs) {
+    const source = (data.source || "").toLowerCase();
+    const isCache = source === "cache";
+    const badgeClass = isCache ? "cache" : "live";
+    const badgeLabel = isCache ? "CACHE" : "LIVE";
+
+    priceResultContainer.innerHTML =
+      '<div class="price-result">' +
+        '<div class="price-top-row">' +
+          '<div>' +
+            '<div class="price-symbol">' + escapeHtml(data.symbol) + '</div>' +
+            '<div class="price-value">' + formatMoney(data.price) + '</div>' +
+          '</div>' +
+          '<span class="badge ' + badgeClass + '">' + badgeLabel + '</span>' +
+        '</div>' +
+        '<div class="price-meta">latency: ' + latencyMs + 'ms</div>' +
+      '</div>';
+
+    priceHistory.unshift({ symbol: data.symbol, price: data.price, source: badgeLabel, latency: latencyMs });
+    priceHistory = priceHistory.slice(0, 6);
+    renderPriceHistory();
+  }
+
+  function renderPriceHistory() {
+    if (!priceHistory.length) { priceHistoryEl.innerHTML = ""; return; }
+
+    priceHistoryEl.innerHTML = priceHistory.map(function (item) {
+      const badgeClass = item.source === "CACHE" ? "cache" : "live";
+      return '<div class="price-history-item">' +
+        '<span class="mono">' + escapeHtml(item.symbol) + " — " + formatMoney(item.price) + '</span>' +
+        '<span class="badge ' + badgeClass + '">' + item.source + '</span>' +
+      '</div>';
+    }).join("");
+  }
+
+  // ---------------- Leaderboard ----------------
+
+  async function refreshLeaderboard() {
+    const reqId = ++leaderboardReqId;
+    try {
+      const data = await apiCall("/leaderboard?n=10");
+      if (reqId !== leaderboardReqId) return;
+      renderLeaderboard(data.top_users || []);
+      setMsg(leaderboardMsg, "");
+    } catch (err) {
+      if (reqId !== leaderboardReqId) return;
+      setMsg(leaderboardMsg, err.message, "error");
+    }
+  }
+
+  function renderLeaderboard(users) {
+    if (!users.length) {
+      leaderboardList.innerHTML = '<div class="empty-row">No ranked traders yet.</div>';
+      return;
+    }
+
+    leaderboardList.innerHTML = users.map(function (u, idx) {
+      const pct = Number(u.return_pct) || 0;
+      const cls = pct > 0 ? "pos" : pct < 0 ? "neg" : "";
+      const color = pct > 0 ? "var(--green)" : pct < 0 ? "var(--red)" : "var(--secondary)";
+      return '<div class="lb-row">' +
+        '<span class="lb-rank">#' + (idx + 1) + '</span>' +
+        '<span class="lb-user">user_' + escapeHtml(u.user_id) + '</span>' +
+        '<span class="lb-return" style="color:' + color + '">' + formatPct(pct) + '</span>' +
+      '</div>';
+    }).join("");
+  }
+
+  // ---------------- Trade form ----------------
+
+  tradeForm.addEventListener("submit", async function (e) {
+    e.preventDefault();
+    submitTrade(e.submitter ? e.submitter.dataset.direction : "buy");
+  });
+
+  async function submitTrade(direction) {
+    setMsg(tradeMsg, "");
+    stopTradePolling();
+
+    const symbol = tickerInput.value.trim().toUpperCase();
+    const quantity = parseInt(tradeQuantity.value, 10);
+    const price = parseFloat(tradePrice.value);
+
+    if (!symbol) {
+      setMsg(tradeMsg, "Pick or enter a ticker first.", "error");
+      return;
+    }
+    if (!(price > 0)) {
+      setMsg(tradeMsg, "Get a quote before submitting a trade.", "error");
+      return;
+    }
+    if (!quantity || quantity <= 0) {
+      setMsg(tradeMsg, "Enter a valid quantity.", "error");
+      return;
+    }
+
+    const buyBtn = document.getElementById("buy-btn");
+    const sellBtn = document.getElementById("sell-btn");
+    buyBtn.disabled = true;
+    sellBtn.disabled = true;
+
+    try {
+      const data = await apiCall("/trades", {
+        method: "POST",
+        body: {
+          symbol: symbol,
+          quantity: quantity,
+          direction: direction,
+          price: price
+        }
+      });
+      renderTradeResult(data);
+      refreshPortfolio();
+      if (data.trade_id) pollTradeStatus(data.trade_id);
+    } catch (err) {
+      setMsg(tradeMsg, err.message, "error");
+    } finally {
+      buyBtn.disabled = false;
+      sellBtn.disabled = false;
+    }
+  }
+
+  function renderTradeResult(data) {
+    const status = (data.status || "unknown").toLowerCase();
+    tradeResultContainer.innerHTML =
+      '<div class="trade-result">' +
+        '<div class="kv"><span>Trade ID</span><span>' + escapeHtml(data.trade_id || "—") + '</span></div>' +
+        '<div class="kv"><span>Status</span><span class="status-pill ' + status + '" id="trade-status-pill">' + escapeHtml(data.status || "unknown") + '</span></div>' +
+        '<div class="kv"><span>Message</span><span>' + escapeHtml(data.message || "") + '</span></div>' +
+      '</div>';
+  }
+
+  function stopTradePolling() {
+    if (tradePollTimer) {
+      clearInterval(tradePollTimer);
+      tradePollTimer = null;
+    }
+  }
+
+  // Polls GET /trades/{trade_id} every 3s for up to 30s so the status pill
+  // can move from queued/pending -> completed/failed once the worker
+  // actually processes the trade, instead of staying stuck on "queued".
+  function pollTradeStatus(tradeId) {
+    const deadline = Date.now() + 30000;
+
+    tradePollTimer = setInterval(async function () {
+      if (Date.now() > deadline) {
+        stopTradePolling();
+        return;
+      }
+
+      try {
+        const trade = await apiCall("/trades/" + encodeURIComponent(tradeId));
+        const pill = document.getElementById("trade-status-pill");
+        if (pill) {
+          const status = (trade.status || "unknown").toLowerCase();
+          pill.textContent = trade.status || "unknown";
+          pill.className = "status-pill " + status;
+        }
+
+        if (trade.status === "completed" || trade.status === "failed") {
+          stopTradePolling();
+          if (trade.status === "completed") refreshPortfolio();
+        }
+      } catch (err) {
+        // Transient poll failure — leave the last known status showing
+        // rather than clobbering it with an error.
+      }
+    }, 3000);
+  }
+
+  // ---------------- Init ----------------
+  setAuthMode("login");
+})();
+</script>
+
+</body>
+</html>
