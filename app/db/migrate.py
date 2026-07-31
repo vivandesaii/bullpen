@@ -29,6 +29,20 @@ def run_migrations():
     cursor = conn.cursor()
 
     try:
+        # Railway's own database dashboard queries pg_stat_statements for its
+        # query-stats panel. On a fresh Postgres the extension exists in
+        # shared_preload_libraries but hasn't been CREATE EXTENSION'd yet, so
+        # that panel errors with "relation pg_stat_statements does not
+        # exist" until something creates it. Best-effort only — if the
+        # environment doesn't allow it, that's just Railway's panel missing
+        # a feature, not a reason to fail the deploy.
+        try:
+            cursor.execute("CREATE EXTENSION IF NOT EXISTS pg_stat_statements")
+            conn.commit()
+        except Exception as e:
+            conn.rollback()
+            logger.warning("Could not create pg_stat_statements extension (non-fatal): %s", e)
+
         # Tracks which migration files have already been applied, so
         # re-running this script is always safe.
         cursor.execute(
