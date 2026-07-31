@@ -5,5 +5,6 @@ from app.config import settings
 redis_client = redis.from_url(
     settings.redis_url,
     decode_responses=True, # Ensure that responses are decoded to strings
-    max_connections=20 # Limit the number of connections in the pool to prevent resource exhaustion
+    max_connections=20, # Limit the number of connections in the pool to prevent resource exhaustion
+    socket_connect_timeout=10 # fail fast on a bad/unreachable host instead of hanging
 )

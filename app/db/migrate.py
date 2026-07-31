@@ -24,7 +24,7 @@ MIGRATIONS_DIR = os.path.join(os.path.dirname(__file__), "migrations")
 
 
 def run_migrations():
-    conn = psycopg2.connect(settings.database_url)
+    conn = psycopg2.connect(settings.database_url, connect_timeout=10)
     conn.autocommit = False
     cursor = conn.cursor()
 

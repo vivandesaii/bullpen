@@ -1,6 +1,21 @@
+import sys
+import logging
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routes import auth, portfolio, trades, prices, leaderboard, documents
+
+logger = logging.getLogger("main")
+
+try:
+    from app.routes import auth, portfolio, trades, prices, leaderboard, documents
+except Exception:
+    # If any route module fails to import (bad config, missing dependency,
+    # circular import), fail loudly and immediately instead of leaving
+    # uvicorn to die silently with no visible reason in the logs.
+    logger.exception("FATAL: failed to import route modules during startup")
+    sys.stdout.flush()
+    sys.stderr.flush()
+    sys.exit(1)
 
 app = FastAPI(title="Bullpen", version="1.0.0") # Entry point for the API
 
