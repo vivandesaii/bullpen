@@ -17,6 +17,15 @@
     --card: #FFFFFF;
   }
 
+  body.dark-mode {
+    --text: #E8E8E8;
+    --bg: #0F0F0F;
+    --secondary: #888888;
+    --border: #2A2A2A;
+    --card: #1A1A1A;
+    /* green/red stay the same in both modes */
+  }
+
   * { box-sizing: border-box; }
 
   html, body {
@@ -25,6 +34,23 @@
     background: var(--bg);
     color: var(--text);
     font-family: 'Inter', sans-serif;
+  }
+
+  body {
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+
+  .sidebar-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 4px;
+  }
+
+  .theme-toggle-btn {
+    padding: 5px 10px;
+    font-size: 11px;
+    text-transform: lowercase;
   }
 
   .mono {
@@ -236,7 +262,7 @@
     display: grid;
     grid-template-columns: 1.1fr 1fr 0.9fr;
     gap: 20px;
-    align-items: start;
+    align-items: stretch;
   }
 
   @media (max-width: 1100px) {
@@ -510,7 +536,10 @@
 
   <!-- ============ SIDEBAR: AUTH ============ -->
   <aside class="sidebar">
-    <div class="brand">bullpen</div>
+    <div class="sidebar-header">
+      <div class="brand">bullpen</div>
+      <button type="button" class="secondary theme-toggle-btn" id="theme-toggle-btn">dark</button>
+    </div>
     <div class="brand-sub">paper trading competition api demo</div>
 
     <div id="auth-panel">
@@ -664,7 +693,7 @@
 (function () {
   "use strict";
 
-  const API_BASE = "http://localhost:8000";
+  const API_BASE = "https://web-production-c1d55.up.railway.app";
 
   // ---------------- State ----------------
   let sessionId = null; // in-memory only, never persisted
@@ -674,6 +703,7 @@
   let authMode = "login"; // or "register"
   let portfolioReqId = 0;
   let leaderboardReqId = 0;
+  let theme = "light"; // in-memory only — no localStorage in this environment
   let tradePollTimer = null;
 
   // ---------------- DOM refs ----------------
@@ -1113,7 +1143,23 @@
     }, 3000);
   }
 
+  // ---------------- Theme ----------------
+
+  const themeToggleBtn = document.getElementById("theme-toggle-btn");
+
+  function applyTheme() {
+    document.body.classList.toggle("dark-mode", theme === "dark");
+    // button shows the mode you'd switch to next
+    themeToggleBtn.textContent = theme === "dark" ? "light" : "dark";
+  }
+
+  themeToggleBtn.addEventListener("click", function () {
+    theme = theme === "dark" ? "light" : "dark";
+    applyTheme();
+  });
+
   // ---------------- Init ----------------
+  applyTheme();
   setAuthMode("login");
 })();
 </script>
