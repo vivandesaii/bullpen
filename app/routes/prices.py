@@ -1,3 +1,4 @@
+import asyncio
 from fastapi import APIRouter, HTTPException, Depends
 from app.services.cache import get_cached, set_cache
 from app.services.rate_limit import check_rate_limit
@@ -11,6 +12,33 @@ class PriceResponse(BaseModel):
     symbol: str
     price: float
     source: str
+
+class TickerResult(BaseModel):
+    symbol: str
+    name: str | None
+    exchange: str | None
+
+# Registered before /{symbol} so "search" is never swallowed as a ticker symbol.
+@router.get("/search", response_model=list[TickerResult], dependencies=[Depends(check_rate_limit)])
+async def search_tickers(q: str, user_id: int = Depends(get_session)):
+    """
+    Endpoint to search for ticker symbols by company name or partial symbol,
+    used to power the frontend's autocomplete dropdown.
+    """
+    def _search():
+        results = yf.Search(q, max_results=8)
+        return results.quotes
+
+    quotes = await asyncio.to_thread(_search)  # yf.Search does a blocking network call
+
+    return [
+        {
+            "symbol": r.get("symbol"),
+            "name": r.get("longname") or r.get("shortname"),
+            "exchange": r.get("exchange")
+        }
+        for r in quotes if r.get("symbol")
+    ]
 
 @router.get("/{symbol}", response_model=PriceResponse, dependencies=[Depends(check_rate_limit)]) # check_rate_limit resolves the session itself, so the limit is per authenticated user
 async def get_price(symbol: str, user_id: int = Depends(get_session)):
