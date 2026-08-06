@@ -238,6 +238,39 @@
     color: var(--text);
   }
 
+  .roadmap {
+    margin-top: 40px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+  }
+
+  .roadmap-title {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--secondary);
+    margin-bottom: 10px;
+  }
+
+  .roadmap-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .roadmap-list li {
+    font-size: 11px;
+    line-height: 1.5;
+    color: var(--secondary);
+    padding: 6px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .roadmap-list li:last-child {
+    border-bottom: none;
+  }
+
   /* ---------- Messages ---------- */
   .msg {
     font-size: 12px;
@@ -628,6 +661,17 @@
         <button class="secondary" id="logout-btn" style="width:100%;">log out</button>
       </div>
       <div id="session-msg"></div>
+    </div>
+
+    <div class="roadmap">
+      <div class="roadmap-title">on the roadmap</div>
+      <ul class="roadmap-list">
+        <li>kafka price streaming: real-time price events pushed to connected clients via websocket instead of polling</li>
+        <li>portfolio statements: monthly pdf reports stored in s3, downloadable via presigned urls</li>
+        <li>natural language portfolio queries: "how is my portfolio doing?" answered by an llm with portfolio context</li>
+        <li>options trading: calls and puts on existing holdings</li>
+        <li>mobile app: react native client</li>
+      </ul>
     </div>
   </aside>
 
