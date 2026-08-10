@@ -72,7 +72,6 @@ and TTL check in a single round trip. Resets per window without
 a cron job.
 
 ## Running locally
-
 ```bash
 cp .env.example .env
 # fill in .env values
