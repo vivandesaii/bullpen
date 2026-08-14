@@ -6,8 +6,6 @@ from passlib.context import CryptContext
 from app.db.connection import get_connection, release_connection
 
 pwd_context = CryptContext(schemes=["bcrypt"])
-
-
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 class User(BaseModel):
