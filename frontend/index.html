@@ -108,7 +108,6 @@
   .card-title {
     font-size: 11px;
     font-weight: 600;
-    text-transform: uppercase;
     letter-spacing: 0.06em;
     color: var(--secondary);
     margin: 0 0 16px 0;
@@ -119,7 +118,6 @@
     display: block;
     font-size: 11px;
     font-weight: 600;
-    text-transform: uppercase;
     letter-spacing: 0.05em;
     color: var(--secondary);
     margin-bottom: 6px;
@@ -202,7 +200,6 @@
     padding: 8px 0;
     font-size: 12px;
     font-weight: 600;
-    text-transform: uppercase;
     letter-spacing: 0.05em;
     color: var(--secondary);
     cursor: pointer;
@@ -225,7 +222,6 @@
 
   .session-label {
     font-size: 10px;
-    text-transform: uppercase;
     letter-spacing: 0.06em;
     color: var(--secondary);
     margin-bottom: 4px;
@@ -247,7 +243,6 @@
   .roadmap-title {
     font-size: 10px;
     font-weight: 600;
-    text-transform: uppercase;
     letter-spacing: 0.06em;
     color: var(--secondary);
     margin-bottom: 10px;
@@ -307,7 +302,6 @@
   .section-heading {
     font-size: 13px;
     font-weight: 700;
-    text-transform: uppercase;
     letter-spacing: 0.08em;
     color: var(--secondary);
     margin: 40px 0 16px 0;
@@ -318,7 +312,6 @@
   /* ---------- Portfolio ---------- */
   .balance-label {
     font-size: 11px;
-    text-transform: uppercase;
     letter-spacing: 0.06em;
     color: var(--secondary);
     margin-bottom: 4px;
@@ -354,7 +347,6 @@
   th {
     text-align: left;
     font-size: 10px;
-    text-transform: uppercase;
     letter-spacing: 0.05em;
     color: var(--secondary);
     font-weight: 600;
@@ -586,7 +578,6 @@
     font-size: 11px;
     font-weight: 700;
     padding: 2px 8px;
-    text-transform: uppercase;
   }
 
   .status-pill.queued, .status-pill.pending { color: #B45309; background: rgba(180,83,9,0.1); }
@@ -601,7 +592,6 @@
 
   #portfolio-source {
     font-family: 'JetBrains Mono', monospace;
-    text-transform: uppercase;
     font-size: 10px;
     letter-spacing: 0.04em;
     opacity: 0.7;
@@ -1178,8 +1168,8 @@
 
     try {
       const data = await apiCall("/prices/" + encodeURIComponent(symbol));
-      const latencyMs = Math.round(performance.now() - start);
-      renderPriceResult(data, latencyMs);
+      const roundTripMs = Math.round(performance.now() - start);
+      renderPriceResult(data, roundTripMs);
       // Same ticker feeds both the quote and the trade — only the
       // price needs to be carried over into the trade form.
       tradePrice.value = Number(data.price).toFixed(2);
@@ -1190,11 +1180,16 @@
     }
   }
 
-  function renderPriceResult(data, latencyMs) {
+  function renderPriceResult(data, roundTripMs) {
     const source = (data.source || "").toLowerCase();
     const isCache = source === "cache";
     const badgeClass = isCache ? "cache" : "live";
     const badgeLabel = isCache ? "CACHE" : "LIVE";
+    const lookupMs = data.lookup_ms != null ? data.lookup_ms.toFixed(1) : null;
+
+    const metaLine = lookupMs != null
+      ? 'lookup: ' + lookupMs + 'ms &middot; round-trip: ' + roundTripMs + 'ms'
+      : 'latency: ' + roundTripMs + 'ms';
 
     priceResultContainer.innerHTML =
       '<div class="price-result">' +
@@ -1205,10 +1200,10 @@
           '</div>' +
           '<span class="badge ' + badgeClass + '">' + badgeLabel + '</span>' +
         '</div>' +
-        '<div class="price-meta">latency: ' + latencyMs + 'ms</div>' +
+        '<div class="price-meta">' + metaLine + '</div>' +
       '</div>';
 
-    priceHistory.unshift({ symbol: data.symbol, price: data.price, source: badgeLabel, latency: latencyMs });
+    priceHistory.unshift({ symbol: data.symbol, price: data.price, source: badgeLabel, latency: lookupMs != null ? lookupMs + 'ms' : roundTripMs + 'ms' });
     priceHistory = priceHistory.slice(0, 6);
     renderPriceHistory();
   }
