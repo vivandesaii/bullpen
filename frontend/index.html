@@ -638,6 +638,10 @@
       </div>
 
       <form id="auth-form">
+        <div class="field" id="auth-username-field" style="display:none;">
+          <label for="auth-username">username</label>
+          <input type="text" id="auth-username" placeholder="trader_jane" maxlength="32" />
+        </div>
         <div class="field">
           <label for="auth-email">email</label>
           <input type="email" id="auth-email" required placeholder="trader@bullpen.dev" />
@@ -803,6 +807,8 @@
   const authPanel = document.getElementById("auth-panel");
   const sessionPanel = document.getElementById("session-panel");
   const authForm = document.getElementById("auth-form");
+  const authUsernameField = document.getElementById("auth-username-field");
+  const authUsername = document.getElementById("auth-username");
   const authEmail = document.getElementById("auth-email");
   const authPassword = document.getElementById("auth-password");
   const authSubmit = document.getElementById("auth-submit");
@@ -905,6 +911,8 @@
     tabLogin.classList.toggle("active", mode === "login");
     tabRegister.classList.toggle("active", mode === "register");
     authSubmit.textContent = mode === "login" ? "Log In" : "Create Account";
+    authUsernameField.style.display = mode === "register" ? "" : "none";
+    authUsername.required = mode === "register";
     setMsg(authMsg, "");
   }
 
@@ -917,19 +925,28 @@
 
     const email = authEmail.value.trim();
     const password = authPassword.value;
+    const username = authUsername.value.trim();
 
     if (!email || !password) {
       setMsg(authMsg, "Email and password are required.", "error");
       return;
     }
 
+    if (authMode === "register" && !username) {
+      setMsg(authMsg, "Username is required.", "error");
+      return;
+    }
+
     const path = authMode === "login" ? "/auth/login" : "/auth/register";
+    const body = authMode === "login"
+      ? { email: email, password: password }
+      : { email: email, password: password, username: username };
     authSubmit.disabled = true;
 
     try {
       const data = await apiCall(path, {
         method: "POST",
-        body: { email: email, password: password }
+        body: body
       });
       sessionId = data.session_id;
       onAuthenticated();
@@ -1235,7 +1252,7 @@
       const color = pct > 0 ? "var(--green)" : pct < 0 ? "var(--red)" : "var(--secondary)";
       return '<div class="lb-row">' +
         '<span class="lb-rank">#' + (idx + 1) + '</span>' +
-        '<span class="lb-user">user_' + escapeHtml(u.user_id) + '</span>' +
+        '<span class="lb-user">' + escapeHtml(u.username || ("Trader #" + u.user_id)) + '</span>' +
         '<span class="lb-return" style="color:' + color + '">' + formatPct(pct) + '</span>' +
       '</div>';
     }).join("");

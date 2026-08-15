@@ -12,6 +12,11 @@ class User(BaseModel):
     email: str
     password: str
 
+class RegisterUser(BaseModel):
+    email: str
+    password: str
+    username: str
+
 class AuthResponse(BaseModel):
     status: str
     session_id: str
@@ -23,11 +28,15 @@ class MessageResponse(BaseModel):
 
 
 @router.post("/register", response_model=AuthResponse, tags=["auth"], dependencies=[Depends(check_rate_limit)])
-async def register_user(register_request: User):
+async def register_user(register_request: RegisterUser):
     """
     Endpoint to register a new user.
     Validates the request, hashes the password, and stores the user in the database.
     """
+    username = register_request.username.strip()
+    if not username:
+        raise HTTPException(status_code=400, detail="Username is required.")
+
     # Hash the password
     hashed_password = pwd_context.hash(register_request.password)
 
@@ -37,24 +46,24 @@ async def register_user(register_request: User):
     try:
         cursor.execute(
             """
-            INSERT INTO users (email, hashed_password)
-            VALUES (%s, %s)
+            INSERT INTO users (email, hashed_password, username)
+            VALUES (%s, %s, %s)
             RETURNING id
             """,
-            (register_request.email, hashed_password)
+            (register_request.email, hashed_password, username)
         )
 
         user_id = cursor.fetchone()["id"]
         conn.commit()
 
         session_id = await create_session(user_id=user_id)
-        
+
         return {"status": "success", "session_id": session_id, "message": "User registered successfully."}
-        
+
 
     except Exception as e:
         conn.rollback()
-        raise HTTPException(status_code=400, detail="Email already registered.")
+        raise HTTPException(status_code=400, detail="Email or username already registered.")
 
     finally:
         cursor.close()
